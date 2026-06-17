@@ -1,10 +1,14 @@
 import { Router } from 'express'
-import { join } from 'path'
-import { writeFileSync, unlinkSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { writeFileSync, unlinkSync, readdirSync, readFileSync } from 'fs'
 import * as vault from './vault-fs'
 import { TOPAZ_BUILD } from './build-info'
 
 export const vaultRouter = Router()
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const WEB_DIST = join(__dirname, '..', 'dist-web')
 
 function registerVaultInConfig(name: string, vaultPath: string) {
   const cfg = vault.readWebConfig()
@@ -37,6 +41,31 @@ vaultRouter.get('/health', (_req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) })
   }
+})
+
+vaultRouter.get('/whatami', (_req, res) => {
+  let jsFile = ''
+  let hasNewTagline = false
+  let hasOldTagline = false
+  try {
+    const assets = join(WEB_DIST, 'assets')
+    jsFile = readdirSync(assets).find((f) => f.startsWith('index.web') && f.endsWith('.js')) ?? ''
+    if (jsFile) {
+      const js = readFileSync(join(assets, jsFile), 'utf-8')
+      hasNewTagline = js.includes('Next Level Notes')
+      hasOldTagline = js.includes('Your connected knowledge base')
+    }
+  } catch {
+    // dist-web may be missing in dev
+  }
+  res.json({
+    build: TOPAZ_BUILD,
+    jsFile,
+    hasNewTagline,
+    hasOldTagline,
+    vaultApi: true,
+    expectedSubtitle: 'Next Level Notes',
+  })
 })
 
 vaultRouter.get('/check', (_req, res) => {

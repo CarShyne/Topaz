@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import type { Server } from 'http'
 import { Bonjour } from 'bonjour-service'
 import { mountSyncRoutes } from './sync-server'
@@ -80,7 +80,14 @@ export function createHubApp(): express.Application {
       },
     }))
     app.get(/^(?!\/api\/).*/, (_req, res) => {
-      res.sendFile(join(WEB_ROOT, 'index.html'))
+      const indexPath = join(WEB_ROOT, 'index.html')
+      let html = readFileSync(indexPath, 'utf-8')
+      const inject = `<meta name="topaz-server-build" content="${TOPAZ_BUILD}" />\n    <script>window.__TOPAZ_SERVER__={build:${JSON.stringify(TOPAZ_BUILD)},subtitle:"Next Level Notes"};</script>`
+      if (!html.includes('topaz-server-build')) {
+        html = html.replace('</head>', `    ${inject}\n  </head>`)
+      }
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+      res.type('html').send(html)
     })
   }
 

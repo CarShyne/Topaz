@@ -1,13 +1,10 @@
-# Portainer stack — pulls from Docker Hub (jt7777/topaz).
-# Repository: https://github.com/CarShyne/Topaz
-# Compose path: docker-compose.portainer.yml
-#
-# After code changes, maintainers run: ./scripts/publish-jt7777.sh
-# Then in Portainer: Pull and redeploy this stack.
+# Portainer — use an explicit version tag after each publish (not only :latest).
+# Example: jt7777/topaz:44e2f28
+# Publish: ./scripts/publish-jt7777.sh (builds Intel + ARM, pushes both tags)
 
 services:
   topaz:
-    image: jt7777/topaz:latest
+    image: jt7777/topaz:44e2f28
     pull_policy: always
     ports:
       - "3921:3921"

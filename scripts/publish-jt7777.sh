@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Build the latest Topaz and push to Docker Hub as jt7777/topaz:latest.
+# Build multi-arch (Intel + Apple Silicon) and push to Docker Hub.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-IMAGE="jt7777/topaz:latest"
+IMAGE="jt7777/topaz"
 BUILD_ID="$(date +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+GIT_SHA="$(git rev-parse --short HEAD)"
 
 echo ""
-echo "=== Publish Topaz to Docker Hub ==="
-echo "Image: $IMAGE"
+echo "=== Publish Topaz to Docker Hub (multi-arch) ==="
+echo "Tags: ${IMAGE}:latest and ${IMAGE}:${GIT_SHA}"
 echo "Build id: $BUILD_ID"
 echo ""
 
@@ -22,33 +23,29 @@ echo "Getting latest code..."
 git pull
 
 echo ""
-echo "Building with --no-cache (3–8 minutes)..."
-docker build --no-cache \
+echo "Setting up buildx (if needed)..."
+docker buildx inspect topaz-builder >/dev/null 2>&1 || docker buildx create --name topaz-builder --use
+docker buildx use topaz-builder
+
+echo ""
+echo "Building for linux/amd64 + linux/arm64 (5–15 minutes)..."
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --no-cache \
   --build-arg CACHEBUST="$BUILD_ID" \
   --build-arg TOPAZ_BUILD="$BUILD_ID" \
-  -t "$IMAGE" \
+  -t "${IMAGE}:latest" \
+  -t "${IMAGE}:${GIT_SHA}" \
+  --push \
   .
 
 echo ""
-echo "Verifying image contains Next Level Notes..."
-docker run --rm "$IMAGE" sh -c 'grep -q "Next Level Notes" /app/dist-web/assets/*.js && grep -q "Next Level Notes" /app/dist-web/index.html'
-
+echo "DONE — published:"
+echo "  ${IMAGE}:latest"
+echo "  ${IMAGE}:${GIT_SHA}"
 echo ""
-echo "Pushing to Docker Hub..."
-docker push "$IMAGE"
-
-DIGEST="$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" 2>/dev/null || true)"
-
+echo "In Portainer, set image to: ${IMAGE}:${GIT_SHA}"
+echo "  (Using a version tag avoids stale amd64/arm64 'latest' confusion.)"
 echo ""
-echo "DONE — published $IMAGE"
-echo "Build: $BUILD_ID"
-echo "${DIGEST:-}(see Docker Hub for digest)}"
-echo ""
-echo "NEXT STEPS (important):"
-echo "  1. Portainer → Stacks → Topaz → Stop"
-echo "  2. Remove the old container (or enable Recreate)"
-echo "  3. Pull and redeploy"
-echo "  4. Open: http://YOUR-SERVER:3921/api/vault/check"
-echo "     Must show build: $BUILD_ID"
-echo "  5. Safari: delete old home-screen icon, add again after hard refresh"
+echo "Then open: http://YOUR-SERVER:3921/api/vault/whatami"
+echo "  Must show hasNewTagline: true"
 echo ""
