@@ -1,7 +1,7 @@
 services:
   topaz:
     build: .
-    image: ghcr.io/carshyne/topaz:latest
+    image: jt7777/topaz:latest
     ports:
       - "3921:3921"
     volumes:

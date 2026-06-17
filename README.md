@@ -30,44 +30,39 @@ Topaz’s visual identity — its dark theme, color palette, typography, and ove
 
 ## Docker / Portainer (self-hosted web app)
 
-Every push to `main` builds a Docker image automatically: **`ghcr.io/carshyne/topaz:latest`**
+Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r/jt7777/topaz).
 
-### Portainer — pull from GitHub (recommended)
+### Portainer (for you and other users)
 
-Use the pre-built image (no local build, avoids “permission denied” errors):
+1. **Stacks** → **Add stack** (or edit existing)
+2. Build method: **Repository**
+3. Repository URL: `https://github.com/CarShyne/Topaz`
+4. Reference: `refs/heads/main`
+5. Compose path: **`docker-compose.portainer.yml`**
+6. Deploy
 
-1. Open **Portainer** → **Stacks** → **Add stack**
-2. Name: `topaz`
-3. Build method: **Repository**
-4. Repository URL: `https://github.com/CarShyne/Topaz`
-5. Repository reference: `refs/heads/main`
-6. Compose path: **`docker-compose.portainer.yml`** ← important (not `docker-compose.yml`)
-7. Deploy the stack
+Ignore `ghcr.io/carshyne/...` — use **jt7777** only (GitHub registry often gives permission denied).
 
-No GitHub login is required (the repo is public).
+### After you change code (maintainers)
 
-After deploy, open `http://YOUR-SERVER:3921`. You should see **Next Level Notes** and **Updated · build …** under the title.
-
-### “Permission denied” fixes
-
-| Error | Cause | Fix |
-|-------|--------|-----|
-| `pull access denied` for `jt7777/topaz` | Old compose used Docker Hub image that was never pushed | Use `docker-compose.portainer.yml` (pulls from GitHub Container Registry) |
-| `permission denied` on docker.sock during **build** | Portainer cannot build images on that host | Use `docker-compose.portainer.yml` (pull only, no build) |
-| `pull access denied` for `ghcr.io/carshyne/topaz` | GitHub Action has not run yet, or package is private | Wait for [Actions](https://github.com/CarShyne/Topaz/actions) to finish, then set package visibility to **Public** under GitHub → Packages → topaz |
-
-### Update to latest version
-
-Portainer → Stacks → `topaz` → **Pull and redeploy** (or recreate the container).
-
-### Local Mac (Docker Desktop)
+On your Mac, publish the new image to Docker Hub once:
 
 ```bash
-git clone https://github.com/CarShyne/Topaz.git
-cd Topaz
-./scripts/deploy-topaz.sh
+cd ~/Projects/Topaz
+git pull
+./scripts/publish-jt7777.sh
 ```
 
-### Optional: mirror to Docker Hub (`jt7777/topaz`)
+Then **Portainer → Pull and redeploy**. Everyone pulling `jt7777/topaz:latest` gets the update.
 
-In GitHub repo **Settings → Secrets → Actions**, add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, then extend the workflow if you want Hub publishing.
+### “Permission denied” / old UI / vault won’t create
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| Still says “Your connected knowledge base” | Old `jt7777/topaz` image on Docker Hub | Run `./scripts/publish-jt7777.sh`, then redeploy Portainer |
+| `pull access denied` for `ghcr.io/carshyne/...` | Don’t use GitHub registry | Use `docker-compose.portainer.yml` (jt7777 only) |
+| Create vault does nothing | Same — old image without vault API | Publish + redeploy |
+
+### Optional: auto-publish on git push
+
+Add GitHub repo secrets `DOCKERHUB_USERNAME` (`jt7777`) and `DOCKERHUB_TOKEN`, then commit `.github/workflows/docker-publish.yml` (needs a token with **workflow** scope to push workflow files).

@@ -1,14 +1,13 @@
-# Use this file in Portainer (recommended).
+# Portainer stack — pulls from Docker Hub (jt7777/topaz).
 # Repository: https://github.com/CarShyne/Topaz
 # Compose path: docker-compose.portainer.yml
-# Reference: refs/heads/main
 #
-# GitHub Actions builds the image on every push to main.
-# Portainer only pulls the image — no local build, no permission issues.
+# After code changes, maintainers run: ./scripts/publish-jt7777.sh
+# Then in Portainer: Pull and redeploy this stack.
 
 services:
   topaz:
-    image: ghcr.io/carshyne/topaz:latest
+    image: jt7777/topaz:latest
     pull_policy: always
     ports:
       - "3921:3921"

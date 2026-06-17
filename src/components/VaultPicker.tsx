@@ -1,11 +1,33 @@
 import { useEffect, useState } from 'react'
 import { isWeb } from '../lib/device'
 import { newId } from '../lib/id'
+import type { VaultEntry } from '../stores/vaultStore'
 import icon from '../assets/icon.png'
 import styles from './VaultPicker.module.css'
 
 interface Props {
-  onOpen: (path: string, name: string, entries?: import('../stores/vaultStore').VaultEntry[]) => void | Promise<void>
+  onOpen: (path: string, name: string, entries?: VaultEntry[]) => void | Promise<void>
+}
+
+async function webCreateAndOpen(name: string): Promise<{ vaultPath: string; name: string; entries: VaultEntry[] }> {
+  const res = await fetch('/api/vault/createAndOpen', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  const text = await res.text()
+  if (!res.ok) {
+    let message = `Server error (${res.status})`
+    try {
+      const data = JSON.parse(text) as { error?: string }
+      if (data.error) message = data.error
+    } catch {
+      if (text.includes('Cannot POST')) message = 'Old Topaz image — run ./scripts/publish-jt7777.sh then redeploy Portainer'
+      else if (text) message = text.slice(0, 200)
+    }
+    throw new Error(message)
+  }
+  return JSON.parse(text) as { vaultPath: string; name: string; entries: VaultEntry[] }
 }
 
 export function VaultPicker({ onOpen }: Props) {
@@ -15,8 +37,6 @@ export function VaultPicker({ onOpen }: Props) {
   const [busy, setBusy] = useState(false)
   const [serverOk, setServerOk] = useState<boolean | null>(null)
   const [serverBuild, setServerBuild] = useState('')
-
-  const appBuild = import.meta.env.VITE_APP_BUILD ?? ''
 
   useEffect(() => {
     fetch('/api/vault/health')
@@ -31,7 +51,6 @@ export function VaultPicker({ onOpen }: Props) {
       })
       .catch(() => {
         setServerOk(false)
-        setError('Your Topaz box is still running the OLD version (that is why you still see the old text). Rebuild it — steps below.')
       })
   }, [])
 
@@ -42,30 +61,30 @@ export function VaultPicker({ onOpen }: Props) {
         <h1 className={styles.title}>Topaz</h1>
         <p className={styles.subtitle}>Next Level Notes</p>
         {serverOk && (
-          <p className={styles.buildHint}>Updated · build {serverBuild}</p>
+          <p className={styles.buildHint}>Server ready · build {serverBuild}</p>
         )}
 
         {serverOk === false && (
           <div className={styles.serverWarning}>
-            <strong>Still on the old Topaz</strong>
-            <p>If you still see &ldquo;Your connected knowledge base&rdquo;, the Docker container was never rebuilt. Git is updated — Docker is not.</p>
-            <p><strong>On the computer that runs Docker</strong>, open Terminal and paste:</p>
-            <code className={styles.codeBlock}>cd ~/Projects/Topaz && git pull && ./scripts/deploy-topaz.sh</code>
-            <p><strong>Portainer users:</strong> Stacks → Add/Edit stack → Repository URL <code>https://github.com/CarShyne/Topaz</code> → Compose path <code>docker-compose.portainer.yml</code> → Deploy. Then hard-refresh Safari.</p>
+            <strong>Old Docker image</strong>
+            <p>You are pulling <code>jt7777/topaz</code> but it is an <em>old</em> build (old tagline, vault broken).</p>
+            <p>On your Mac, open Terminal and run once:</p>
+            <code className={styles.codeBlock}>cd ~/Projects/Topaz && git pull && ./scripts/publish-jt7777.sh</code>
+            <p>Then Portainer → Stacks → Topaz → <strong>Pull and redeploy</strong>.</p>
           </div>
         )}
 
         <div className={styles.actions}>
           <button
             className={styles.primary}
-            disabled={busy || !vaultName.trim() || serverOk === false}
+            disabled={busy || !vaultName.trim()}
             onClick={async () => {
               setError('')
               setBusy(true)
               try {
                 const name = vaultName.trim()
-                if (isWeb && window.topaz.createAndOpenVault) {
-                  const { vaultPath, name: label, entries } = await window.topaz.createAndOpenVault(name)
+                if (isWeb) {
+                  const { vaultPath, name: label, entries } = await webCreateAndOpen(name)
                   await onOpen(vaultPath, label, entries)
                 } else {
                   const path = await window.topaz.createVault(name)
@@ -75,15 +94,11 @@ export function VaultPicker({ onOpen }: Props) {
                   }
                   await onOpen(path, name)
                 }
+                setServerOk(true)
                 const cfg = await window.topaz.getConfig()
                 setRecent(cfg.vaults)
               } catch (e) {
-                const msg = e instanceof Error ? e.message : 'Could not create vault.'
-                if (msg.includes('Cannot POST') || msg.includes('404') || msg.includes('Failed to fetch')) {
-                  setError('Server is out of date — rebuild with ./scripts/deploy-topaz.sh then refresh.')
-                } else {
-                  setError(msg)
-                }
+                setError(e instanceof Error ? e.message : 'Could not create vault.')
               } finally {
                 setBusy(false)
               }
