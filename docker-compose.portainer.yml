@@ -1,9 +1,5 @@
-# Portainer stack — pulls jt7777/topaz from Docker Hub.
-# Repository: https://github.com/CarShyne/Topaz
-# Compose path: docker-compose.portainer.yml
-#
-# ONLY jt7777/topaz:latest exists until you run ./scripts/publish-jt7777.sh on your Mac.
-# Do NOT use commit tags like :ae5e318 unless publish just created that tag.
+# Portainer on Raspberry Pi / OMV — image tag is updated by ./scripts/publish-jt7777.sh
+# After publish, Pull and redeploy this stack in Portainer (or run scripts/pi-force-update.sh on the Pi)
 
 services:
   topaz:

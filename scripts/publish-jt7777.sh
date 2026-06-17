@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# Build multi-arch (Intel + Apple Silicon) and push to Docker Hub.
+# Build multi-arch image, push to Docker Hub, update Portainer compose tag in git.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-IMAGE="jt7777/topaz"
-BUILD_ID="$(date +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+IMAGE_REPO="jt7777/topaz"
+BUILD_ID="$(date +%Y%m%d-%H%M%S)"
 GIT_SHA="$(git rev-parse --short HEAD)"
+RELEASE_TAG="release-${BUILD_ID}"
+COMPOSE_FILE="$ROOT/docker-compose.portainer.yml"
 
 echo ""
-echo "=== Publish Topaz to Docker Hub (multi-arch) ==="
-echo "Tags: ${IMAGE}:latest and ${IMAGE}:${GIT_SHA}"
-echo "Build id: $BUILD_ID"
+echo "=== Publish Topaz → Docker Hub ==="
+echo "Tags: ${IMAGE_REPO}:latest  and  ${IMAGE_REPO}:${RELEASE_TAG}"
 echo ""
 
 if ! docker info >/dev/null 2>&1; then
@@ -19,33 +20,47 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Getting latest code..."
 git pull
 
-echo ""
-echo "Setting up buildx (if needed)..."
 docker buildx inspect topaz-builder >/dev/null 2>&1 || docker buildx create --name topaz-builder --use
 docker buildx use topaz-builder
 
-echo ""
-echo "Building for linux/amd64 + linux/arm64 (5–15 minutes)..."
+echo "Building linux/amd64 + linux/arm64 (Raspberry Pi uses arm64)..."
 docker buildx build --platform linux/amd64,linux/arm64 \
   --no-cache \
   --build-arg CACHEBUST="$BUILD_ID" \
   --build-arg TOPAZ_BUILD="$BUILD_ID" \
-  -t "${IMAGE}:latest" \
-  -t "${IMAGE}:${GIT_SHA}" \
+  -t "${IMAGE_REPO}:latest" \
+  -t "${IMAGE_REPO}:${RELEASE_TAG}" \
   --push \
   .
 
 echo ""
-echo "DONE — published:"
-echo "  ${IMAGE}:latest"
-echo "  ${IMAGE}:${GIT_SHA}"
+echo "Updating docker-compose.portainer.yml → ${RELEASE_TAG}"
+sed -i.bak "s|image: ${IMAGE_REPO}:.*|image: ${IMAGE_REPO}:${RELEASE_TAG}|" "$COMPOSE_FILE"
+rm -f "${COMPOSE_FILE}.bak"
+
+if [[ "${1:-}" != "--no-git" ]]; then
+  git add "$COMPOSE_FILE"
+  git commit -m "Release Docker image ${RELEASE_TAG}" || true
+  git push origin main || echo "(git push failed — update Portainer image tag manually to ${RELEASE_TAG})"
+fi
+
 echo ""
-echo "In Portainer, set image to: ${IMAGE}:${GIT_SHA}"
-echo "  (Using a version tag avoids stale amd64/arm64 'latest' confusion.)"
+echo "============================================"
+echo "DONE"
+echo "  Image: ${IMAGE_REPO}:${RELEASE_TAG}"
+echo "  Also:  ${IMAGE_REPO}:latest"
 echo ""
-echo "Then open: http://YOUR-SERVER:3921/api/vault/whatami"
-echo "  Must show hasNewTagline: true"
+echo "On Raspberry Pi / Portainer:"
+echo "  1. Stacks → Topaz → Pull and redeploy"
+echo "     (compose from git now points at ${RELEASE_TAG})"
+echo "  OR run on the Pi: ./scripts/pi-force-update.sh ${RELEASE_TAG}"
+echo ""
+echo "Container log should say:"
+echo "  Topaz hub listening on 0.0.0.0:3921 (build ${BUILD_ID})"
+echo "NOT: (hub publishing on)"
+echo ""
+echo "Browser check: /api/vault/whatami → hasNewTagline: true"
+echo "============================================"
 echo ""

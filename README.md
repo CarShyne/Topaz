@@ -32,43 +32,37 @@ Topaz’s visual identity — its dark theme, color palette, typography, and ove
 
 Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r/jt7777/topaz).
 
-### Portainer (for you and other users)
+### Raspberry Pi / OpenMediaVault (Portainer)
 
-Use **`jt7777/topaz:latest` only** — commit tags like `:ae5e318` do **not** exist on Docker Hub until you run a publish script.
+Your Pi is **arm64** — same as Apple Silicon Mac. The URL working only means the **old** container runs; Docker will **not** replace it unless the image on Docker Hub changes **and** the Pi pulls a **new tag or new digest**.
 
-1. **Stacks** → **Add stack** (or edit existing)
-2. Build method: **Repository**
-3. Repository URL: `https://github.com/CarShyne/Topaz`
-4. Reference: `refs/heads/main`
-5. Compose path: **`docker-compose.portainer.yml`**
-6. Image in compose: **`jt7777/topaz:latest`**
-7. Deploy
+**Why pull does not seem to update**
 
-### After you change code (maintainers)
+1. `latest` on Docker Hub still points at the **same old build** (your log shows `(hub publishing on)` = old code).
+2. Portainer **restarts** the container without re-pulling the image.
+3. Docker on the Pi **caches** `jt7777/topaz:latest` and says “already up to date”.
 
-Publish from your Mac (Docker Desktop must be running):
+**Fix (maintainer, on your Mac)**
 
 ```bash
-cd ~/Projects/Topaz
-git pull
+cd ~/Projects/Topaz && git pull && ./scripts/publish-jt7777.sh
 ```
 
-**Portainer on Intel NAS / PC:**
-```bash
-./scripts/publish-jt7777-amd64.sh
-```
+This pushes a **new unique tag** (e.g. `release-20260217-153045`), updates `docker-compose.portainer.yml` in git, and pushes to GitHub.
 
-**Portainer on Mac (M1/M2/M3):**
-```bash
-./scripts/publish-jt7777-arm64.sh
-```
+**Then on the Pi / Portainer**
 
-**Both / unsure:**
-```bash
-./scripts/publish-jt7777.sh
-```
+1. Stacks → Topaz → **Pull and redeploy** (stack from git picks up the new `release-…` tag), **or**
+2. SSH to the Pi: `cd` to the repo and run `./scripts/pi-force-update.sh release-YYYYMMDD-HHMMSS`
 
-Then **Portainer → Pull and redeploy**. Check `http://YOUR-SERVER:3921/api/vault/whatami` — must show `"hasNewTagline": true`.
+**How you know it worked**
+
+| Log line | Meaning |
+|----------|---------|
+| `(hub publishing on)` | **Old** image — still broken |
+| `(build 20260217-…)` | **New** image — vault + Next Level Notes |
+
+Browser: `http://PI-IP:3921/api/vault/whatami` → `"hasNewTagline": true`
 
 ### “Permission denied” / old UI / vault won’t create
 
