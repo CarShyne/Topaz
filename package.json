@@ -18,6 +18,8 @@
     "docker:up": "docker compose up -d",
     "deploy": "bash scripts/deploy-topaz.sh",
     "publish": "bash scripts/publish-jt7777.sh",
+    "publish:amd64": "bash scripts/publish-jt7777-amd64.sh",
+    "publish:arm64": "bash scripts/publish-jt7777-arm64.sh",
     "build:mobile": "vite build --config vite.mobile.config.ts && cp dist-mobile/index.mobile.html dist-mobile/index.html",
     "cap:sync": "npm run build:mobile && npx cap sync ios",
     "cap:open": "npx cap open ios",

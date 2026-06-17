@@ -34,32 +34,48 @@ Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r
 
 ### Portainer (for you and other users)
 
+Use **`jt7777/topaz:latest` only** — commit tags like `:ae5e318` do **not** exist on Docker Hub until you run a publish script.
+
 1. **Stacks** → **Add stack** (or edit existing)
 2. Build method: **Repository**
 3. Repository URL: `https://github.com/CarShyne/Topaz`
 4. Reference: `refs/heads/main`
 5. Compose path: **`docker-compose.portainer.yml`**
-6. Deploy
-
-Ignore `ghcr.io/carshyne/...` — use **jt7777** only (GitHub registry often gives permission denied).
+6. Image in compose: **`jt7777/topaz:latest`**
+7. Deploy
 
 ### After you change code (maintainers)
 
-On your Mac, publish the new image to Docker Hub once:
+Publish from your Mac (Docker Desktop must be running):
 
 ```bash
 cd ~/Projects/Topaz
 git pull
+```
+
+**Portainer on Intel NAS / PC:**
+```bash
+./scripts/publish-jt7777-amd64.sh
+```
+
+**Portainer on Mac (M1/M2/M3):**
+```bash
+./scripts/publish-jt7777-arm64.sh
+```
+
+**Both / unsure:**
+```bash
 ./scripts/publish-jt7777.sh
 ```
 
-Then **Portainer → Pull and redeploy**. Everyone pulling `jt7777/topaz:latest` gets the update.
+Then **Portainer → Pull and redeploy**. Check `http://YOUR-SERVER:3921/api/vault/whatami` — must show `"hasNewTagline": true`.
 
 ### “Permission denied” / old UI / vault won’t create
 
 | Symptom | Cause | Fix |
 |---------|--------|-----|
-| Still says “Your connected knowledge base” | Old `jt7777/topaz` image on Docker Hub | Run `./scripts/publish-jt7777.sh`, then redeploy Portainer |
+| `jt7777/topaz:ae5e318` pull fails | That tag was never pushed — only exists in git, not Docker Hub | Use `jt7777/topaz:latest` |
+| Still says “Your connected knowledge base” | Old image on Docker Hub (often wrong CPU type) | Run `publish-jt7777-amd64.sh` if Portainer is Intel |
 | `pull access denied` for `ghcr.io/carshyne/...` | Don’t use GitHub registry | Use `docker-compose.portainer.yml` (jt7777 only) |
 | Create vault does nothing | Same — old image without vault API | Publish + redeploy |
 
