@@ -4,16 +4,31 @@ import { newId } from '../lib/id'
 import icon from '../assets/icon.png'
 import styles from './VaultPicker.module.css'
 
-interface Props { onOpen: (path: string, name: string) => void | Promise<void> }
+interface Props {
+  onOpen: (path: string, name: string, entries?: import('../stores/vaultStore').VaultEntry[]) => void | Promise<void>
+}
 
 export function VaultPicker({ onOpen }: Props) {
   const [vaultName, setVaultName] = useState('My Vault')
   const [recent, setRecent] = useState<{ id: string; name: string; path: string }[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [serverOk, setServerOk] = useState<boolean | null>(null)
 
   useEffect(() => {
-    window.topaz.getConfig().then(cfg => setRecent(cfg.vaults))
+    fetch('/api/vault/health')
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Server not ready')
+        const data = await res.json() as { ok?: boolean }
+        if (!data.ok) throw new Error('Server not ready')
+        setServerOk(true)
+        const cfg = await window.topaz.getConfig()
+        setRecent(cfg.vaults)
+      })
+      .catch(() => {
+        setServerOk(false)
+        setError('This Topaz server is out of date or not running. It needs to be rebuilt (see steps below).')
+      })
   }, [])
 
   return (
@@ -23,25 +38,44 @@ export function VaultPicker({ onOpen }: Props) {
         <h1 className={styles.title}>Topaz</h1>
         <p className={styles.subtitle}>Next Level Notes</p>
 
+        {serverOk === false && (
+          <div className={styles.serverWarning}>
+            <strong>Server needs updating</strong>
+            <p>On the machine running Docker, open Terminal and run:</p>
+            <code className={styles.codeBlock}>cd ~/Projects/Topaz && ./scripts/deploy-topaz.sh</code>
+            <p>Then refresh this page.</p>
+          </div>
+        )}
+
         <div className={styles.actions}>
           <button
             className={styles.primary}
-            disabled={busy || !vaultName.trim()}
+            disabled={busy || !vaultName.trim() || serverOk === false}
             onClick={async () => {
               setError('')
               setBusy(true)
               try {
                 const name = vaultName.trim()
-                const path = await window.topaz.createVault(name)
-                if (!path) {
-                  setError('Could not create vault.')
-                  return
+                if (isWeb && window.topaz.createAndOpenVault) {
+                  const { vaultPath, name: label, entries } = await window.topaz.createAndOpenVault(name)
+                  await onOpen(vaultPath, label, entries)
+                } else {
+                  const path = await window.topaz.createVault(name)
+                  if (!path) {
+                    setError('Could not create vault. Try again.')
+                    return
+                  }
+                  await onOpen(path, name)
                 }
-                await onOpen(path, name)
                 const cfg = await window.topaz.getConfig()
                 setRecent(cfg.vaults)
               } catch (e) {
-                setError(e instanceof Error ? e.message : 'Could not create vault.')
+                const msg = e instanceof Error ? e.message : 'Could not create vault.'
+                if (msg.includes('Cannot POST') || msg.includes('404') || msg.includes('Failed to fetch')) {
+                  setError('Server is out of date — rebuild with ./scripts/deploy-topaz.sh then refresh.')
+                } else {
+                  setError(msg)
+                }
               } finally {
                 setBusy(false)
               }

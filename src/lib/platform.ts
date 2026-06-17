@@ -19,7 +19,8 @@ export interface TopazAPI {
   getConfig: () => Promise<TopazConfig>
   saveConfig: (cfg: TopazConfig) => Promise<boolean>
   pickVaultFolder: () => Promise<string | null>
-  createVault: (name: string) => Promise<string | null>
+  createVault?: (name: string) => Promise<string | null>
+  createAndOpenVault?: (name: string) => Promise<{ vaultPath: string; name: string; entries: VaultEntry[] }>
   openVault: (path: string) => Promise<VaultEntry[]>
   readNote: (path: string) => Promise<string | null>
   writeNote: (path: string, content: string) => Promise<boolean>

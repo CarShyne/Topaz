@@ -2,8 +2,24 @@ import { Router } from 'express'
 import { join } from 'path'
 import { writeFileSync, unlinkSync } from 'fs'
 import * as vault from './vault-fs'
+import { TOPAZ_BUILD } from './build-info'
 
 export const vaultRouter = Router()
+
+function registerVaultInConfig(name: string, vaultPath: string) {
+  const cfg = vault.readWebConfig()
+  const displayName = name.trim()
+  let entry = cfg.vaults.find((v) => v.path === vaultPath)
+  if (!entry) {
+    entry = { id: vaultPath, name: displayName, path: vaultPath }
+    cfg.vaults.push(entry)
+  } else {
+    entry.name = displayName
+  }
+  cfg.lastVaultId = entry.id
+  vault.writeWebConfig(cfg)
+  return { vaultPath, name: displayName, entries: vault.openVault(vaultPath) }
+}
 
 vaultRouter.get('/health', (_req, res) => {
   try {
@@ -13,6 +29,7 @@ vaultRouter.get('/health', (_req, res) => {
     unlinkSync(probe)
     res.json({
       ok: true,
+      build: TOPAZ_BUILD,
       dataDir: vault.DATA_DIR,
       vaultsDir: vault.VAULTS_DIR,
       vaultCount: vault.listVaultIds().length,
@@ -230,18 +247,22 @@ vaultRouter.post('/createVault', (req, res) => {
   }
   try {
     const vaultPath = vault.createVault(name.trim())
-    const cfg = vault.readWebConfig()
-    const displayName = name.trim()
-    let entry = cfg.vaults.find((v) => v.path === vaultPath)
-    if (!entry) {
-      entry = { id: vaultPath, name: displayName, path: vaultPath }
-      cfg.vaults.push(entry)
-    } else {
-      entry.name = displayName
-    }
-    cfg.lastVaultId = entry.id
-    vault.writeWebConfig(cfg)
+    registerVaultInConfig(name, vaultPath)
     res.json({ vaultPath })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+vaultRouter.post('/createAndOpen', (req, res) => {
+  const { name } = req.body as { name?: string }
+  if (typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'name required' })
+  }
+  try {
+    const vaultPath = vault.createVault(name.trim())
+    const result = registerVaultInConfig(name, vaultPath)
+    res.json(result)
   } catch (err) {
     res.status(500).json({ error: String(err) })
   }

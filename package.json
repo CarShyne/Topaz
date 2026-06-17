@@ -16,6 +16,7 @@
     "hub": "tsx server/hub-server.ts",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
+    "deploy": "bash scripts/deploy-topaz.sh",
     "build:mobile": "vite build --config vite.mobile.config.ts && cp dist-mobile/index.mobile.html dist-mobile/index.html",
     "cap:sync": "npm run build:mobile && npx cap sync ios",
     "cap:open": "npx cap open ios",

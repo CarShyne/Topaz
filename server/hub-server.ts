@@ -1,13 +1,16 @@
 import express from 'express'
+import cors from 'cors'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import type { Server } from 'http'
 import { Bonjour } from 'bonjour-service'
-import { createSyncApp } from './sync-server'
+import { mountSyncRoutes } from './sync-server'
 import { vaultRouter } from './vault-routes'
 import { ensureDataDirs } from './vault-fs'
+import { TOPAZ_BUILD } from './build-info'
 
+export { TOPAZ_BUILD }
 export const PORT = Number(process.env.PORT ?? 3921)
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const WEB_ROOT = join(__dirname, '..', 'dist-web')
@@ -48,12 +51,12 @@ export function createHubApp(): express.Application {
   ensureDataDirs()
 
   const app = express()
+  app.use(cors())
   app.use(express.json({ limit: '50mb' }))
   app.use('/api/vault', vaultRouter)
-  app.use(createSyncApp())
 
   app.get('/api/hub', (_req, res) => {
-    res.json({ enabled: hubEnabled, port: PORT })
+    res.json({ enabled: hubEnabled, port: PORT, build: TOPAZ_BUILD })
   })
 
   app.post('/api/hub', (req, res) => {
@@ -63,8 +66,10 @@ export function createHubApp(): express.Application {
     }
     hubEnabled = enabled
     setHubPublishing(hubEnabled)
-    res.json({ enabled: hubEnabled, port: PORT })
+    res.json({ enabled: hubEnabled, port: PORT, build: TOPAZ_BUILD })
   })
+
+  mountSyncRoutes(app)
 
   if (existsSync(WEB_ROOT)) {
     app.use(express.static(WEB_ROOT))
@@ -83,7 +88,7 @@ export function startHubServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     httpServer = app.listen(PORT, '0.0.0.0', () => {
       if (hubEnabled && bonjourAllowed()) setHubPublishing(true)
-      console.log(`Topaz hub listening on 0.0.0.0:${PORT} (hub publishing ${hubEnabled ? 'on' : 'off'})`)
+      console.log(`Topaz hub listening on 0.0.0.0:${PORT} (build ${TOPAZ_BUILD})`)
       resolve()
     })
     httpServer.on('error', reject)

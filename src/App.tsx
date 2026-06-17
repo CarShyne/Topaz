@@ -33,7 +33,7 @@ export default function App() {
       }
       if (cfg.lastVaultId) {
         const vault = cfg.vaults.find(v => v.id === cfg.lastVaultId)
-        if (vault) openVault(vault.path, vault.name)
+        if (vault) void openVault(vault.path, vault.name).catch(() => {})
       }
     })
   }, [])
@@ -95,13 +95,13 @@ export default function App() {
   )
 }
 
-async function openVault(path: string, name: string) {
-  const entries = await window.topaz.openVault(path)
+async function openVault(path: string, name: string, entries?: import('./stores/vaultStore').VaultEntry[]) {
+  const list = entries ?? await window.topaz.openVault(path)
   const store = useVaultStore.getState()
-  store.setVault(path, name, entries)
+  store.setVault(path, name, list)
 
-  const welcome = entries.find(e => !e.isDir && e.path.endsWith('Welcome.md'))
-  const firstNote = welcome ?? entries.find(e => !e.isDir && e.path.endsWith('.md'))
+  const welcome = list.find(e => !e.isDir && e.path.endsWith('Welcome.md'))
+  const firstNote = welcome ?? list.find(e => !e.isDir && e.path.endsWith('.md'))
   if (firstNote && !isCapacitor) {
     store.openTab(firstNote.path, firstNote.name.replace(/\.md$/, ''))
   }

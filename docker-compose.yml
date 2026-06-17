@@ -1,5 +1,6 @@
 services:
   topaz:
+    build: .
     image: jt7777/topaz:latest
     ports:
       - "3921:3921"
@@ -11,6 +12,7 @@ services:
       PORT: "3921"
       TOPAZ_HUB: "true"
       TOPAZ_NO_BONJOUR: "true"
+      TOPAZ_BUILD: "2025-06-17"
     restart: unless-stopped
 
 volumes:

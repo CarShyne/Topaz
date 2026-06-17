@@ -70,6 +70,12 @@ export function createWebAPI(): TopazAPI {
       return vaultPath
     },
 
+    createAndOpenVault: async (name) => {
+      const result = await vaultPost<{ vaultPath: string; name: string; entries: VaultEntry[] }>('createAndOpen', { name })
+      currentVaultPath = result.vaultPath
+      return result
+    },
+
     openVault: async (path) => {
       currentVaultPath = path
       const { entries } = await vaultPost<{ entries: VaultEntry[] }>('openVault', { vaultPath: path })

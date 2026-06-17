@@ -44,11 +44,7 @@ function newPairCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
 
-export function createSyncApp() {
-  const app = express()
-  app.use(cors())
-  app.use(express.json({ limit: '50mb' }))
-
+export function mountSyncRoutes(app: express.Application) {
   function auth(req: express.Request, res: express.Response, next: express.NextFunction) {
     const header = req.headers.authorization
     if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' })
@@ -162,7 +158,13 @@ export function createSyncApp() {
     const remote = store.vault_files.filter(v => v.user_id === user.userId && v.vault_id === vaultId)
     res.json({ files: remote.map(({ path, content, mtime }) => ({ path, content, mtime })), deleted: deleted ?? [] })
   })
+}
 
+export function createSyncApp() {
+  const app = express()
+  app.use(cors())
+  app.use(express.json({ limit: '50mb' }))
+  mountSyncRoutes(app)
   return app
 }
 
