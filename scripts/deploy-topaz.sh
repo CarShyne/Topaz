@@ -6,36 +6,41 @@ cd "$ROOT"
 
 echo ""
 echo "=== Topaz deploy ==="
-echo "This rebuilds the app from the latest code (takes a few minutes)."
 echo ""
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo "Docker is not installed or not in your PATH."
-  echo "Install Docker Desktop, then run this script again."
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker is not running."
+  echo "1. Open the Docker app (whale icon) and wait until it says Running"
+  echo "2. Run this script again"
   exit 1
 fi
 
-echo "Step 1/3: Building image jt7777/topaz:latest ..."
-docker compose build
+echo "Getting latest code..."
+git pull
 
 echo ""
-echo "Step 2/3: Starting container ..."
+echo "Building (3–5 minutes)..."
+docker compose build --no-cache
+
+echo ""
+echo "Starting..."
 docker compose up -d --force-recreate
 
 echo ""
-echo "Step 3/3: Checking server ..."
-sleep 3
-if curl -fsS "http://127.0.0.1:3921/api/vault/health" | grep -q '"ok":true'; then
+echo "Checking..."
+sleep 4
+HEALTH="$(curl -fsS "http://127.0.0.1:3921/api/vault/health" 2>/dev/null || true)"
+if echo "$HEALTH" | grep -q '"ok":true'; then
+  BUILD="$(echo "$HEALTH" | sed -n 's/.*"build":"\([^"]*\)".*/\1/p')"
   echo ""
-  echo "SUCCESS — Topaz is running."
-  echo "Open in your browser: http://127.0.0.1:3921"
-  echo "(Replace 127.0.0.1 with your server's IP if you're on another device.)"
+  echo "SUCCESS"
+  echo "  Open: http://127.0.0.1:3921"
+  echo "  You should see: Next Level Notes (build ${BUILD:-2026-06-16})"
+  echo "  NOT: Your connected knowledge base"
   echo ""
 else
   echo ""
-  echo "Container started but health check failed. Last log lines:"
-  docker compose logs --tail 40 topaz || true
-  echo ""
-  echo "If you use Portainer, update the stack to use 'build: .' and redeploy."
+  echo "Health check failed. Logs:"
+  docker compose logs --tail 50 topaz
   exit 1
 fi

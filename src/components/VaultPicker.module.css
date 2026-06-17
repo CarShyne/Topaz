@@ -32,7 +32,14 @@
 
 .subtitle {
   color: var(--text-secondary);
-  margin-bottom: 32px;
+  margin-bottom: 8px;
+}
+
+.buildHint {
+  font-size: 11px;
+  color: var(--ruby-dim);
+  margin-bottom: 24px;
+  letter-spacing: 0.04em;
 }
 
 .actions {

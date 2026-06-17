@@ -3,6 +3,8 @@ import { resolve } from 'path'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const APP_BUILD = process.env.TOPAZ_BUILD ?? '2026-06-16'
+
 const ICON_180 = resolve(__dirname, 'resources/icon-180.png')
 
 function embeddedWebIcons(): Plugin {
@@ -17,7 +19,9 @@ function embeddedWebIcons(): Plugin {
   return {
     name: 'topaz-embedded-web-icons',
     transformIndexHtml(html) {
-      return html.replace('<!-- topaz-embedded-icons -->', iconTags)
+      return html
+        .replace('<!-- topaz-embedded-icons -->', iconTags)
+        .replace('<!-- topaz-build -->', APP_BUILD)
     },
     generateBundle() {
       this.emitFile({
@@ -50,6 +54,7 @@ export default defineConfig({
   base: '/',
   define: {
     'import.meta.env.VITE_PLATFORM': JSON.stringify('web'),
+    'import.meta.env.VITE_APP_BUILD': JSON.stringify(APP_BUILD),
   },
   build: {
     outDir: 'dist-web',

@@ -12,7 +12,7 @@ services:
       PORT: "3921"
       TOPAZ_HUB: "true"
       TOPAZ_NO_BONJOUR: "true"
-      TOPAZ_BUILD: "2025-06-17"
+      TOPAZ_BUILD: "2026-06-16"
     restart: unless-stopped
 
 volumes:

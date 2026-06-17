@@ -14,20 +14,24 @@ export function VaultPicker({ onOpen }: Props) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [serverOk, setServerOk] = useState<boolean | null>(null)
+  const [serverBuild, setServerBuild] = useState('')
+
+  const appBuild = import.meta.env.VITE_APP_BUILD ?? ''
 
   useEffect(() => {
     fetch('/api/vault/health')
       .then(async (res) => {
         if (!res.ok) throw new Error('Server not ready')
-        const data = await res.json() as { ok?: boolean }
+        const data = await res.json() as { ok?: boolean; build?: string }
         if (!data.ok) throw new Error('Server not ready')
         setServerOk(true)
+        setServerBuild(data.build ?? 'unknown')
         const cfg = await window.topaz.getConfig()
         setRecent(cfg.vaults)
       })
       .catch(() => {
         setServerOk(false)
-        setError('This Topaz server is out of date or not running. It needs to be rebuilt (see steps below).')
+        setError('Your Topaz box is still running the OLD version (that is why you still see the old text). Rebuild it — steps below.')
       })
   }, [])
 
@@ -37,13 +41,17 @@ export function VaultPicker({ onOpen }: Props) {
         <img src={icon} alt="Topaz" className={styles.logo} />
         <h1 className={styles.title}>Topaz</h1>
         <p className={styles.subtitle}>Next Level Notes</p>
+        {serverOk && (
+          <p className={styles.buildHint}>Updated · build {serverBuild}</p>
+        )}
 
         {serverOk === false && (
           <div className={styles.serverWarning}>
-            <strong>Server needs updating</strong>
-            <p>On the machine running Docker, open Terminal and run:</p>
-            <code className={styles.codeBlock}>cd ~/Projects/Topaz && ./scripts/deploy-topaz.sh</code>
-            <p>Then refresh this page.</p>
+            <strong>Still on the old Topaz</strong>
+            <p>If you still see &ldquo;Your connected knowledge base&rdquo;, the Docker container was never rebuilt. Git is updated — Docker is not.</p>
+            <p><strong>On the computer that runs Docker</strong>, open Terminal and paste:</p>
+            <code className={styles.codeBlock}>cd ~/Projects/Topaz && git pull && ./scripts/deploy-topaz.sh</code>
+            <p><strong>Portainer users:</strong> Stacks → Topaz → Stop → Pull latest image / Rebuild → Start. Then hard-refresh Safari (hold refresh button → Reload Without Content Blockers).</p>
           </div>
         )}
 
