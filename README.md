@@ -2,6 +2,7 @@ Topaz is a free, self-hosted markdown note-taking app inspired by tools like Obs
 built around local-first sync without subscriptions,no paywalled features,no third-party cloud dependancy.
 
    Markdown-based notes, organized into projects
+-  Selfhosted sync   
 -  Code pairing between devices   
 -  Link notes together with `[[double brackets]]`
 -  Built-in sync across devices via a custom REST API — no third-party sync service required
