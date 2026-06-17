@@ -70,7 +70,8 @@ export function VaultPicker({ onOpen }: Props) {
             <p>You are pulling <code>jt7777/topaz</code> but it is an <em>old</em> build (old tagline, vault broken).</p>
             <p>On your Mac, open Terminal and run once:</p>
             <code className={styles.codeBlock}>cd ~/Projects/Topaz && git pull && ./scripts/publish-jt7777.sh</code>
-            <p>Then Portainer → Stacks → Topaz → <strong>Pull and redeploy</strong>.</p>
+            <p>Check server: open <code>/api/vault/check</code> — build id must match your latest publish.</p>
+            <p>Safari: delete the old home-screen shortcut, hard-refresh, then add to home screen again.</p>
           </div>
         )}
 

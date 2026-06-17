@@ -72,7 +72,13 @@ export function createHubApp(): express.Application {
   mountSyncRoutes(app)
 
   if (existsSync(WEB_ROOT)) {
-    app.use(express.static(WEB_ROOT))
+    app.use(express.static(WEB_ROOT, {
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html') || filePath.endsWith('.web.html') || filePath.endsWith('manifest.webmanifest')) {
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+        }
+      },
+    }))
     app.get(/^(?!\/api\/).*/, (_req, res) => {
       res.sendFile(join(WEB_ROOT, 'index.html'))
     })

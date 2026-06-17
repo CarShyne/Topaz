@@ -21,7 +21,7 @@ function embeddedWebIcons(): Plugin {
     transformIndexHtml(html) {
       return html
         .replace('<!-- topaz-embedded-icons -->', iconTags)
-        .replace('<!-- topaz-build -->', APP_BUILD)
+        .replaceAll('<!-- topaz-build -->', APP_BUILD)
     },
     generateBundle() {
       this.emitFile({

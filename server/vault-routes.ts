@@ -39,6 +39,21 @@ vaultRouter.get('/health', (_req, res) => {
   }
 })
 
+vaultRouter.get('/check', (_req, res) => {
+  res.type('text/plain').send(
+    [
+      'Topaz server check',
+      `build: ${TOPAZ_BUILD}`,
+      'vault-api: ok',
+      'expected-tagline: Next Level Notes',
+      '',
+      'If the app still shows "Your connected knowledge base", Safari is showing a cached old page.',
+      'Fix: delete the home-screen shortcut, hard-refresh, or open in a private tab.',
+      'Also confirm Portainer recreated the container after docker push.',
+    ].join('\n')
+  )
+})
+
 vaultRouter.post('/getConfig', (_req, res) => {
   try {
     res.json({ config: vault.readWebConfig() })

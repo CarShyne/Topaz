@@ -5,11 +5,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+ARG CACHEBUST=dev
+ARG TOPAZ_BUILD=dev
+ENV TOPAZ_BUILD=$TOPAZ_BUILD
+
 COPY . .
 
-ARG TOPAZ_BUILD=2026-06-16
-ENV TOPAZ_BUILD=$TOPAZ_BUILD
-RUN npm run build:web
+RUN npm run build:web \
+  && test -f dist-web/index.html \
+  && grep -q "Next Level Notes" dist-web/assets/*.js
 
 ENV TOPAZ_DATA_DIR=/data PORT=3921 TOPAZ_HUB=true TOPAZ_NO_BONJOUR=true
 
