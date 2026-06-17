@@ -1,0 +1,16 @@
+node_modules
+out
+release
+dist
+dist-web
+dist-mobile
+data/
+build
+.DS_Store
+*.log
+.topaz-server
+
+# Keep Windows installer for pull-without-npm workflow
+!installers/
+!installers/windows/
+!installers/windows/**

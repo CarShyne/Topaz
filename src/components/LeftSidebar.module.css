@@ -1,0 +1,33 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  margin: 4px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.header {
+  padding: 10px 12px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.empty {
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}

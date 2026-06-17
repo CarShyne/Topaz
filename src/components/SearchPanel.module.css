@@ -1,0 +1,37 @@
+.panel { display: flex; flex-direction: column; height: 100%; }
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ruby);
+}
+
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+}
+
+.results { flex: 1; overflow-y: auto; }
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: left;
+}
+.result:hover { background: var(--bg-hover); }
+
+.name { font-size: 13px; color: var(--ruby-bright); }
+.snippet { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.none { padding: 16px; color: var(--text-muted); font-size: 13px; }

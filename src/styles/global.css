@@ -1,0 +1,150 @@
+:root {
+  --bg-base: #080808;
+  --bg-surface: #111111;
+  --bg-elevated: #1a1a1a;
+  --bg-hover: #222222;
+  --bg-active: #2a1518;
+  --border: rgba(255, 255, 255, 0.07);
+  --separator: rgba(255, 255, 255, 0.04);
+  --border-accent: rgba(224, 17, 95, 0.35);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --text-primary: #e8e8e8;
+  --text-secondary: #9a9a9a;
+  --text-muted: #666666;
+  --ruby: #9b111e;
+  --ruby-bright: #e0115f;
+  --ruby-glow: rgba(224, 17, 95, 0.25);
+  --ruby-dim: #6b0c16;
+  --accent: var(--ruby-bright);
+  --ribbon-width: 44px;
+  --sidebar-width: 260px;
+  --right-sidebar-width: 280px;
+  --status-height: 26px;
+  --header-height: 40px;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-brand: 'AllAges Demo', var(--font-ui);
+}
+
+@font-face {
+  font-family: 'AllAges Demo';
+  src: url('../assets/fonts/AllAgesDemo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ruby-dim); }
+
+::selection {
+  background: var(--ruby-glow);
+  color: var(--text-primary);
+}
+
+a { color: var(--ruby-bright); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.markdown-preview h1, .markdown-preview h2, .markdown-preview h3,
+.markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
+  margin: 1.2em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.markdown-preview h1 { font-size: 2em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+.markdown-preview h2 { font-size: 1.5em; }
+.markdown-preview h3 { font-size: 1.25em; }
+.markdown-preview p { margin: 0.6em 0; line-height: 1.7; }
+.markdown-preview ul, .markdown-preview ol { margin: 0.6em 0; padding-left: 1.5em; }
+.markdown-preview li { margin: 0.2em 0; }
+.markdown-preview blockquote {
+  border-left: 3px solid var(--ruby);
+  padding: 0.2em 1em;
+  margin: 0.8em 0;
+  color: var(--text-secondary);
+}
+.markdown-preview code {
+  font-family: var(--font-mono);
+  background: var(--bg-elevated);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.markdown-preview pre {
+  background: var(--bg-elevated);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+.markdown-preview pre code { background: none; padding: 0; }
+.markdown-preview a.note-link,
+.markdown-preview a {
+  color: var(--ruby-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.markdown-preview a.note-link:hover,
+.markdown-preview a:hover { color: #ff4d7a; }
+.markdown-preview .wikilink {
+  color: var(--ruby-bright);
+  cursor: pointer;
+  text-decoration: none;
+}
+.markdown-preview .wikilink:hover { text-decoration: underline; }
+.markdown-preview .wikilink.unresolved { color: var(--text-muted); }
+.markdown-preview hr { border: none; border-top: 1px solid var(--border); margin: 1.5em 0; }
+.markdown-preview table { border-collapse: collapse; margin: 0.8em 0; width: 100%; }
+.markdown-preview th, .markdown-preview td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.8em;
+}
+.markdown-preview th { background: var(--bg-elevated); }
+
+.cm-editor .cm-note-link {
+  color: var(--ruby-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cm-editor { height: 100%; }
+.cm-editor .cm-scroller { font-family: var(--font-mono); font-size: 15px; line-height: 1.6; }
+.cm-editor .cm-content { padding: 16px 24px; }
+.cm-editor .cm-gutters { background: var(--bg-surface); border-right: 1px solid var(--border); color: var(--text-muted); }
+.cm-editor .cm-activeLineGutter { background: var(--bg-hover); }
+.cm-editor .cm-activeLine { background: rgba(224, 17, 95, 0.04); }
+.cm-editor .cm-cursor { border-left-color: var(--ruby-bright) !important; }
+.cm-editor .cm-selectionBackground { background: var(--ruby-glow) !important; }
+.cm-editor .cm-matchingBracket { background: var(--ruby-glow); outline: 1px solid var(--ruby-dim); }

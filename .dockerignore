@@ -1,0 +1,12 @@
+node_modules
+out
+release
+dist
+dist-web
+dist-mobile
+ios
+.git
+.gitignore
+*.log
+.DS_Store
+data

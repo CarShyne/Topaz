@@ -1,0 +1,29 @@
+.menu {
+  position: fixed;
+  z-index: 1200;
+  min-width: 180px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.menu button:hover {
+  background: var(--bg-active);
+  color: var(--ruby-bright);
+}
+
+.danger:hover {
+  color: #f87171 !important;
+}

@@ -1,0 +1,195 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--separator);
+}
+
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ruby-bright);
+  line-height: 1.2;
+}
+
+.vault {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.iconBtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.fab {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--ruby) 0%, var(--ruby-bright) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px var(--ruby-glow);
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Dark crimson side panes — edge to edge, ignore safe areas */
+.sidePane {
+  background: linear-gradient(180deg, #2a0812 0%, #1a040a 100%) !important;
+  color: #f5e8ec;
+  border-color: rgba(224, 17, 95, 0.2) !important;
+}
+
+.tabletSide {
+  flex: 0 0 min(320px, 38vw);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid rgba(224, 17, 95, 0.25);
+}
+
+.mainPane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.infoDrawer {
+  flex: 0 0 min(300px, 42vw);
+  min-height: 0;
+  border-left: 1px solid rgba(224, 17, 95, 0.25);
+  overflow: hidden;
+}
+
+.paneHead {
+  padding: 14px 18px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 200, 215, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 200;
+  display: flex;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(340px, 92vw);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px 14px;
+  border-bottom: 1px solid rgba(224, 17, 95, 0.25);
+}
+
+.drawerHead .brand { font-size: 17px; }
+.drawerHead .vault { font-size: 14px; color: rgba(255, 200, 215, 0.7); }
+
+.sidePane .iconBtn {
+  width: 44px;
+  height: 44px;
+  color: rgba(255, 220, 230, 0.9);
+}
+.sidePane .iconBtn:hover { background: rgba(224, 17, 95, 0.2); }
+
+.drawerActions {
+  margin-top: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(224, 17, 95, 0.25);
+}
+
+.drawerBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(224, 17, 95, 0.15);
+  font-size: 17px;
+  font-weight: 500;
+  text-align: left;
+  color: #fff;
+}
+
+.phone .infoDrawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: min(320px, 92vw);
+  z-index: 150;
+  padding: 0;
+}

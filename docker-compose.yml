@@ -1,0 +1,9 @@
+services:
+  topaz:
+    build: .
+    ports:
+      - "3921:3921"
+    volumes:
+      - ./data:/data
+    environment:
+      TOPAZ_DATA_DIR: /data

@@ -1,0 +1,128 @@
+/* iOS uses the same AppShell layout as Mac — scaled for touch */
+html.platform-ios {
+  --ribbon-width: 40px;
+  --sidebar-width: 200px;
+  --right-sidebar-width: 210px;
+  --header-height: 40px;
+  --status-height: 28px;
+}
+
+html.platform-ios,
+html.platform-ios body,
+html.platform-ios #root {
+  margin: 0;
+  height: var(--app-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+html.platform-ios #root {
+  padding-top: var(--app-offset-top, 0px);
+}
+
+/* iPad / wide: closer to Mac proportions */
+@media (min-width: 768px) {
+  html.platform-ios {
+    --sidebar-width: 240px;
+    --right-sidebar-width: 260px;
+  }
+}
+
+/* Header + status — match editor black, slight safe-area inset */
+.platform-ios [class*="header"] {
+  padding-left: 12px !important;
+  padding-right: 12px;
+  padding-top: max(6px, env(safe-area-inset-top, 0px) * 0.35);
+  min-height: calc(var(--header-height) + max(6px, env(safe-area-inset-top, 0px) * 0.35));
+  height: auto;
+  background: var(--bg-base) !important;
+  border-bottom-color: var(--separator);
+  -webkit-app-region: none;
+}
+
+.platform-ios footer {
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px) * 0.35);
+  min-height: calc(var(--status-height) + max(4px, env(safe-area-inset-bottom, 0px) * 0.35));
+  height: auto;
+  background: var(--bg-base) !important;
+  border-top-color: var(--separator);
+}
+
+/* Ribbon — same vertical strip as Mac */
+.platform-ios [class*="ribbon"] {
+  margin: 4px 0 4px 4px;
+}
+
+.platform-ios [class*="ribbon"] [class*="btn"] {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+}
+
+/* Left + right sidebars — same surfaces as Mac */
+.platform-ios [class*="sidebar"] {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  margin: 4px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.platform-ios [class*="panel"] {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  margin: 4px 4px 4px 0;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.platform-ios .cm-gutters {
+  display: none !important;
+}
+
+/* Workspace tab bar — compact on phone */
+.platform-ios [class*="tabBar"] {
+  padding: 6px 8px;
+}
+
+.platform-ios [class*="fileName"] {
+  font-size: 12px;
+}
+
+.platform-ios [class*="filePath"] {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  html.platform-ios {
+    font-size: 14px;
+  }
+
+  .platform-ios [class*="filePath"] {
+    display: inline;
+  }
+}
+
+@media (pointer: coarse) {
+  .platform-ios [class*="btn"],
+  .platform-ios [class*="infoBtn"],
+  .platform-ios [class*="closeTab"] {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* Give the editor room when the keyboard is up */
+html.platform-ios.keyboard-open footer {
+  display: none;
+}
+
+html.platform-ios.keyboard-open [class*="shell"] {
+  height: var(--app-height, 100dvh);
+}
+
+html.platform-ios.keyboard-open [class*="content"] {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}

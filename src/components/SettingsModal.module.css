@@ -1,0 +1,146 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.modal h2 { margin-bottom: 16px; color: var(--ruby-bright); }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+.tabs button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.tabs button.active { background: var(--bg-active); color: var(--ruby-bright); }
+
+.section label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 12px 0 4px;
+}
+
+.section input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+}
+.section input:focus { border-color: var(--ruby); }
+
+.hubSection {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+}
+
+.hubToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin: 0;
+}
+.hubToggle input {
+  width: auto;
+  accent-color: var(--ruby);
+}
+
+.note { font-size: 12px; color: var(--text-muted); margin: 8px 0; line-height: 1.5; }
+
+.pairBox {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-accent);
+  text-align: center;
+}
+.pairLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.pairCode {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ruby-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.authBtns { display: flex; gap: 8px; margin-top: 16px; }
+.primary {
+  padding: 8px 16px;
+  background: var(--ruby);
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.primary:hover { background: var(--ruby-bright); }
+
+.authBtns button:not(.primary) {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.signedIn { margin-top: 16px; }
+.signedIn button { margin-top: 8px; color: var(--ruby-bright); font-size: 13px; }
+
+.error { color: #f87171; font-size: 13px; margin-top: 8px; }
+.info { color: #4ade80; font-size: 13px; margin-top: 8px; }
+
+.testBtn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ruby-bright);
+}
+.testBtn:hover:not(:disabled) { background: var(--bg-hover); }
+.testBtn:disabled { opacity: 0.5; }
+
+.section code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-base);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.close {
+  margin-top: 20px;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 100%;
+}
