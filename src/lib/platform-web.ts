@@ -5,17 +5,27 @@ const WORKSPACE_PATH = '.topaz/workspace.json'
 
 let currentVaultPath: string | null = null
 
-async function vaultPost<T>(action: string, body: Record<string, unknown>): Promise<T> {
+async function vaultPost<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
   const res = await fetch(`/api/vault/${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) {
+    const text = await res.text()
+    let message = `Request failed (${res.status})`
+    try {
+      const data = JSON.parse(text) as { error?: string }
+      if (data.error) message = data.error
+    } catch {
+      if (text) message = text
+    }
+    throw new Error(message)
+  }
   return res.json()
 }
 
-function readConfig(): TopazConfig {
+function readLocalConfig(): TopazConfig {
   try {
     const raw = localStorage.getItem(CONFIG_KEY)
     if (!raw) return { vaults: [] }
@@ -25,14 +35,33 @@ function readConfig(): TopazConfig {
   }
 }
 
-function writeConfig(cfg: TopazConfig) {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg))
+function writeLocalConfig(cfg: TopazConfig) {
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg))
+  } catch {
+    // Browser may block storage — server config is authoritative for Docker.
+  }
+}
+
+async function readConfig(): Promise<TopazConfig> {
+  try {
+    const { config } = await vaultPost<{ config: TopazConfig }>('getConfig')
+    writeLocalConfig(config)
+    return config
+  } catch {
+    return readLocalConfig()
+  }
+}
+
+async function writeConfig(cfg: TopazConfig) {
+  writeLocalConfig(cfg)
+  await vaultPost('saveConfig', { config: cfg })
 }
 
 export function createWebAPI(): TopazAPI {
   return {
-    getConfig: async () => readConfig(),
-    saveConfig: async (cfg) => { writeConfig(cfg); return true },
+    getConfig: readConfig,
+    saveConfig: async (cfg) => { await writeConfig(cfg); return true },
 
     pickVaultFolder: async () => null,
 

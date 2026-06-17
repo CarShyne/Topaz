@@ -14,6 +14,11 @@ import { noteLinkExtension } from '../lib/codemirror-links'
 import { openExternalLink } from '../lib/links'
 import styles from './NoteEditor.module.css'
 
+function publishEditorStats(content: string) {
+  const words = content.trim() ? content.trim().split(/\s+/).length : 0
+  useVaultStore.getState().setEditorStats(words, content.length)
+}
+
 const topazTheme = EditorView.theme({
   '&': { backgroundColor: '#0a0a0a', color: '#e8e8e8', height: '100%' },
   '.cm-content': { caretColor: '#e0115f', padding: '16px 18px' },
@@ -58,6 +63,7 @@ export function NoteEditor({ path }: { path: string }) {
     pathRef.current = path
     setLoadError('')
     loadedPathRef.current = null
+    useVaultStore.getState().setEditorStats(0, 0)
     window.topaz.readNote(path).then(content => {
       if (pathRef.current !== path) return
       if (content === null) {
@@ -67,6 +73,7 @@ export function NoteEditor({ path }: { path: string }) {
       loadedPathRef.current = path
       setNoteContent(path, content)
       setLiveContent(content)
+      publishEditorStats(content)
       const view = viewRef.current
       if (view) {
         const current = view.state.doc.toString()
@@ -87,6 +94,7 @@ export function NoteEditor({ path }: { path: string }) {
     if (current !== externalContent) {
       view.dispatch({ changes: { from: 0, to: current.length, insert: externalContent } })
       setLiveContent(externalContent)
+      publishEditorStats(externalContent)
     }
   }, [path, externalContent])
 
@@ -122,6 +130,7 @@ export function NoteEditor({ path }: { path: string }) {
         if (!update.docChanged) return
         const content = update.state.doc.toString()
         setLiveContent(content)
+        publishEditorStats(content)
         void saveToDisk(content)
       }),
     ]

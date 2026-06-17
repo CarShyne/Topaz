@@ -1,9 +1,17 @@
 services:
   topaz:
-    build: .
+    image: jt7777/topaz:latest
     ports:
       - "3921:3921"
     volumes:
-      - ./data:/data
+      - topaz_data:/data
     environment:
       TOPAZ_DATA_DIR: /data
+      TOPAZ_VAULTS_DIR: /data/vaults
+      PORT: "3921"
+      TOPAZ_HUB: "true"
+      TOPAZ_NO_BONJOUR: "true"
+    restart: unless-stopped
+
+volumes:
+  topaz_data:

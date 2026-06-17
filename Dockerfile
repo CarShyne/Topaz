@@ -8,8 +8,11 @@ RUN npm ci
 COPY . .
 RUN npm run build:web
 
-ENV TOPAZ_DATA_DIR=/data PORT=3921 TOPAZ_HUB=true
+ENV TOPAZ_DATA_DIR=/data PORT=3921 TOPAZ_HUB=true TOPAZ_NO_BONJOUR=true
 
 EXPOSE 3921
 
-CMD ["npx", "tsx", "server/hub-server.ts"]
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+CMD ["/docker-entrypoint.sh"]

@@ -1,5 +1,5 @@
 import express from 'express'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import type { Server } from 'http'
@@ -9,6 +9,7 @@ import { vaultRouter } from './vault-routes'
 import { ensureDataDirs } from './vault-fs'
 
 export const PORT = Number(process.env.PORT ?? 3921)
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const WEB_ROOT = join(__dirname, '..', 'dist-web')
 
 let hubEnabled = process.env.TOPAZ_HUB !== 'false'
@@ -20,6 +21,8 @@ export function isHubEnabled(): boolean {
 }
 
 function setHubPublishing(enabled: boolean) {
+  if (process.env.TOPAZ_NO_BONJOUR === 'true') return
+
   if (enabled) {
     try {
       if (!bonjour) bonjour = new Bonjour()
@@ -40,9 +43,9 @@ export function createHubApp(): express.Application {
   ensureDataDirs()
 
   const app = express()
-  app.use(express.json())
-  app.use(createSyncApp())
+  app.use(express.json({ limit: '50mb' }))
   app.use('/api/vault', vaultRouter)
+  app.use(createSyncApp())
 
   app.get('/api/hub', (_req, res) => {
     res.json({ enabled: hubEnabled, port: PORT })
@@ -60,8 +63,7 @@ export function createHubApp(): express.Application {
 
   if (existsSync(WEB_ROOT)) {
     app.use(express.static(WEB_ROOT))
-    app.use((req, res, next) => {
-      if (req.path.startsWith('/api/')) return next()
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
       res.sendFile(join(WEB_ROOT, 'index.html'))
     })
   }

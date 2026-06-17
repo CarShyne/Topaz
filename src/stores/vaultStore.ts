@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { isCapacitor } from '../lib/device'
+import { newId } from '../lib/id'
 
 export interface VaultEntry {
   path: string
@@ -44,6 +45,7 @@ interface VaultState {
   authToken: string | null
   userEmail: string | null
   syncServer: string
+  editorStats: { words: number; chars: number } | null
 
   setVault: (path: string, name: string, entries: VaultEntry[]) => void
   setEntries: (entries: VaultEntry[]) => void
@@ -71,6 +73,7 @@ interface VaultState {
   setSyncError: (msg: string | null) => void
   setAuth: (token: string | null, email: string | null) => void
   setSyncServer: (url: string) => void
+  setEditorStats: (words: number, chars: number) => void
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
@@ -99,6 +102,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   authToken: null,
   userEmail: null,
   syncServer: 'http://127.0.0.1:3921',
+  editorStats: null,
 
   setVault: (path, name, entries) => set({
     vaultPath: path,
@@ -122,7 +126,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       set({ activeTabId: existing.id, ...sidebarPatch })
       return
     }
-    const id = crypto.randomUUID()
+    const id = newId()
     const tab: Tab = { id, path, title: title ?? path.replace(/\.md$/, '').split('/').pop() ?? path, view }
     set({ tabs: [...tabs, tab], activeTabId: id, ...sidebarPatch })
     if (view === 'note') {
@@ -193,7 +197,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   setSyncStatus: (syncStatus) => set({ syncStatus }),
   setSyncError: (syncError) => set({ syncError }),
   setAuth: (authToken, userEmail) => set({ authToken, userEmail }),
-  setSyncServer: (syncServer) => set({ syncServer })
+  setSyncServer: (syncServer) => set({ syncServer }),
+  setEditorStats: (words, chars) => set({ editorStats: { words, chars } }),
 }))
 
 export function extractWikiLinks(content: string): string[] {

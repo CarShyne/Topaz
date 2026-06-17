@@ -117,7 +117,7 @@ export function createCapacitorAPI(): TopazAPI {
         await Filesystem.writeFile({
           path: welcome,
           directory: Directory.Data,
-          data: `# Welcome to Topaz\n\nYour connected knowledge base on iOS.\n\n## Getting started\n\n- **Projects** are folders in the sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`,
+          data: `# Welcome to Topaz\n\nNext Level Notes.\n\n## Getting started\n\n- **Projects** are folders in the sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`,
           encoding: Encoding.UTF8
         })
       }

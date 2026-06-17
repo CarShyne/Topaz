@@ -47,6 +47,7 @@ html.platform-ios #root {
   height: auto;
   background: var(--bg-base) !important;
   border-top-color: var(--separator);
+  overflow: hidden;
 }
 
 /* Ribbon — same vertical strip as Mac */

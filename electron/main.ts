@@ -264,7 +264,7 @@ ipcMain.handle('create-vault', async (_e, name: string) => {
   if (!existsSync(generalDir)) mkdirSync(generalDir, { recursive: true })
   const welcome = join(generalDir, 'Welcome.md')
   if (!existsSync(welcome)) {
-    writeFileSync(welcome, `# Welcome to Topaz\n\nYour connected knowledge base.\n\n## Getting started\n\n- **Projects** are folders — create them in the file sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`)
+    writeFileSync(welcome, `# Welcome to Topaz\n\nNext Level Notes.\n\n## Getting started\n\n- **Projects** are folders — create them in the file sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`)
   }
   return vaultPath
 })

@@ -1,7 +1,7 @@
 {
   "name": "topaz",
   "version": "0.1.0",
-  "description": "A connected knowledge base — notes, links, and sync across all your devices.",
+  "description": "Next Level Notes — notes, links, and sync across all your devices.",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

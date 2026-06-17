@@ -12,6 +12,7 @@ import { ExplorerContextMenu } from './components/ExplorerContextMenu'
 import { syncVault } from './lib/sync'
 import { requestSyncDebounced } from './lib/sync-trigger'
 import { isCapacitor, syncUrlForPlatform } from './lib/device'
+import { newId } from './lib/id'
 import { MobileSplash } from './components/MobileSplash'
 
 export default function App() {
@@ -106,7 +107,7 @@ async function openVault(path: string, name: string) {
   }
 
   const cfg = await window.topaz.getConfig()
-  const id = cfg.vaults.find(v => v.path === path)?.id ?? crypto.randomUUID()
+  const id = cfg.vaults.find(v => v.path === path)?.id ?? newId()
   if (!cfg.vaults.find(v => v.path === path)) {
     cfg.vaults.push({ id, name, path })
   }

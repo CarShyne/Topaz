@@ -1,7 +1,47 @@
 import { Router } from 'express'
+import { join } from 'path'
+import { writeFileSync, unlinkSync } from 'fs'
 import * as vault from './vault-fs'
 
 export const vaultRouter = Router()
+
+vaultRouter.get('/health', (_req, res) => {
+  try {
+    vault.ensureDataDirs()
+    const probe = join(vault.DATA_DIR, '.write-test')
+    writeFileSync(probe, 'ok')
+    unlinkSync(probe)
+    res.json({
+      ok: true,
+      dataDir: vault.DATA_DIR,
+      vaultsDir: vault.VAULTS_DIR,
+      vaultCount: vault.listVaultIds().length,
+    })
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) })
+  }
+})
+
+vaultRouter.post('/getConfig', (_req, res) => {
+  try {
+    res.json({ config: vault.readWebConfig() })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+vaultRouter.post('/saveConfig', (req, res) => {
+  const { config } = req.body as { config?: vault.WebTopazConfig }
+  if (!config || typeof config !== 'object') {
+    return res.status(400).json({ error: 'config object required' })
+  }
+  try {
+    vault.writeWebConfig(config)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
 
 function requireVaultPath(
   vaultPath: unknown,
@@ -190,6 +230,17 @@ vaultRouter.post('/createVault', (req, res) => {
   }
   try {
     const vaultPath = vault.createVault(name.trim())
+    const cfg = vault.readWebConfig()
+    const displayName = name.trim()
+    let entry = cfg.vaults.find((v) => v.path === vaultPath)
+    if (!entry) {
+      entry = { id: vaultPath, name: displayName, path: vaultPath }
+      cfg.vaults.push(entry)
+    } else {
+      entry.name = displayName
+    }
+    cfg.lastVaultId = entry.id
+    vault.writeWebConfig(cfg)
     res.json({ vaultPath })
   } catch (err) {
     res.status(500).json({ error: String(err) })

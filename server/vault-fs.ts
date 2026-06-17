@@ -26,6 +26,45 @@ export function ensureDataDirs() {
   if (!existsSync(VAULTS_DIR)) mkdirSync(VAULTS_DIR, { recursive: true })
 }
 
+const WEB_CONFIG_PATH = join(DATA_DIR, 'web-config.json')
+
+export interface WebVaultRef {
+  id: string
+  name: string
+  path: string
+}
+
+export interface WebTopazConfig {
+  vaults: WebVaultRef[]
+  lastVaultId?: string
+  syncServer?: string
+  computerIp?: string
+  pairCode?: string
+  authToken?: string
+  userEmail?: string
+  hubMode?: boolean
+}
+
+export function readWebConfig(): WebTopazConfig {
+  if (!existsSync(WEB_CONFIG_PATH)) return { vaults: [] }
+  try {
+    const cfg = JSON.parse(readFileSync(WEB_CONFIG_PATH, 'utf-8')) as WebTopazConfig
+    return { ...cfg, vaults: Array.isArray(cfg.vaults) ? cfg.vaults : [] }
+  } catch {
+    return { vaults: [] }
+  }
+}
+
+export function writeWebConfig(cfg: WebTopazConfig) {
+  ensureDataDirs()
+  writeFileSync(WEB_CONFIG_PATH, JSON.stringify(cfg, null, 2))
+}
+
+export function listVaultIds(): string[] {
+  if (!existsSync(VAULTS_DIR)) return []
+  return readdirSync(VAULTS_DIR).filter((entry) => !entry.startsWith('.'))
+}
+
 export function resolveVaultPath(vaultPath: string): string {
   if (isAbsolute(vaultPath)) return vaultPath
   return join(VAULTS_DIR, vaultPath)
@@ -109,6 +148,7 @@ export function renameFolder(vaultPath: string, oldPath: string, newPath: string
 }
 
 export function createVault(name: string): string {
+  ensureDataDirs()
   const id = name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase() || `vault-${Date.now()}`
   const vaultPath = join(VAULTS_DIR, id)
   if (!existsSync(vaultPath)) mkdirSync(vaultPath, { recursive: true })
@@ -123,7 +163,7 @@ export function createVault(name: string): string {
   if (!existsSync(welcome)) {
     writeFileSync(
       welcome,
-      `# Welcome to Topaz\n\nYour connected knowledge base.\n\n## Getting started\n\n- **Projects** are folders — create them in the file sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`
+      `# Welcome to Topaz\n\nNext Level Notes.\n\n## Getting started\n\n- **Projects** are folders — create them in the file sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`
     )
   }
 
