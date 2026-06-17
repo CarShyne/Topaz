@@ -21,7 +21,7 @@ html.platform-ios #root {
   padding-top: var(--app-offset-top, 0px);
 }
 
-/* iPad / wide: closer to Mac proportions */
+
 @media (min-width: 768px) {
   html.platform-ios {
     --sidebar-width: 240px;
@@ -29,7 +29,7 @@ html.platform-ios #root {
   }
 }
 
-/* Header + status — match editor black, slight safe-area inset */
+
 .platform-ios [class*="header"] {
   padding-left: 12px !important;
   padding-right: 12px;
