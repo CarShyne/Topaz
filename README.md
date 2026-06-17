@@ -30,6 +30,6 @@ Topaz’s visual identity — its dark theme, color palette, typography, and ove
 
 ## Docker / Portainer (self-hosted web app)
 
-Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r/jt7777/topaz).
+Docker image: **`jt7777/topaz:latest`** (https://hub.docker.com/r/jt7777/topaz).
 
 
