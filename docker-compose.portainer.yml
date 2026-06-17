@@ -3,7 +3,7 @@
 
 services:
   topaz:
-    image: jt7777/topaz:latest
+    image: jt7777/topaz:release-20260617-201923
     pull_policy: always
     ports:
       - "3921:3921"
