@@ -51,7 +51,7 @@ export function VaultPicker({ onOpen }: Props) {
             <p>If you still see &ldquo;Your connected knowledge base&rdquo;, the Docker container was never rebuilt. Git is updated — Docker is not.</p>
             <p><strong>On the computer that runs Docker</strong>, open Terminal and paste:</p>
             <code className={styles.codeBlock}>cd ~/Projects/Topaz && git pull && ./scripts/deploy-topaz.sh</code>
-            <p><strong>Portainer users:</strong> Stacks → Topaz → Stop → Pull latest image / Rebuild → Start. Then hard-refresh Safari (hold refresh button → Reload Without Content Blockers).</p>
+            <p><strong>Portainer users:</strong> Stacks → Add/Edit stack → Repository URL <code>https://github.com/CarShyne/Topaz</code> → Compose path <code>docker-compose.portainer.yml</code> → Deploy. Then hard-refresh Safari.</p>
           </div>
         )}
 

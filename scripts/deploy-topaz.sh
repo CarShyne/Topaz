@@ -20,11 +20,11 @@ git pull
 
 echo ""
 echo "Building (3–5 minutes)..."
-docker compose build --no-cache
+docker compose -f docker-compose.portainer.yml pull || docker compose build --no-cache
 
 echo ""
 echo "Starting..."
-docker compose up -d --force-recreate
+docker compose -f docker-compose.portainer.yml up -d --force-recreate
 
 echo ""
 echo "Checking..."
@@ -41,6 +41,6 @@ if echo "$HEALTH" | grep -q '"ok":true'; then
 else
   echo ""
   echo "Health check failed. Logs:"
-  docker compose logs --tail 50 topaz
+  docker compose -f docker-compose.portainer.yml logs --tail 50 topaz
   exit 1
 fi

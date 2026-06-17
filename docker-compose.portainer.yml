@@ -1,7 +1,15 @@
+# Use this file in Portainer (recommended).
+# Repository: https://github.com/CarShyne/Topaz
+# Compose path: docker-compose.portainer.yml
+# Reference: refs/heads/main
+#
+# GitHub Actions builds the image on every push to main.
+# Portainer only pulls the image — no local build, no permission issues.
+
 services:
   topaz:
-    build: .
     image: ghcr.io/carshyne/topaz:latest
+    pull_policy: always
     ports:
       - "3921:3921"
     volumes:
@@ -12,7 +20,6 @@ services:
       PORT: "3921"
       TOPAZ_HUB: "true"
       TOPAZ_NO_BONJOUR: "true"
-      TOPAZ_BUILD: "2026-06-16"
     restart: unless-stopped
 
 volumes:
