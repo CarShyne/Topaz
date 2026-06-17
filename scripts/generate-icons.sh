@@ -17,6 +17,7 @@ sips -z 1024 1024 "$SRC" --out "$ROOT/resources/icon-1024.png" >/dev/null
 cp "$ROOT/resources/icon-1024.png" "$IOS_ICON"
 cp "$ROOT/resources/icon-1024.png" "$ROOT/resources/icon.png"
 cp "$ROOT/resources/icon-1024.png" "$ROOT/src/assets/icon.png"
+sips -z 180 180 "$ROOT/resources/icon-1024.png" --out "$ROOT/resources/icon-180.png" >/dev/null
 
 # macOS .icns
 rm -rf "$ICONSET"

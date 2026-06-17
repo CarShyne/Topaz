@@ -112,5 +112,5 @@ async function openVault(path: string, name: string) {
     cfg.vaults.push({ id, name, path })
   }
   cfg.lastVaultId = id
-  await window.topaz.saveConfig(cfg)
+  await window.topaz.saveConfig(cfg).catch(() => {})
 }

@@ -1,0 +1,15 @@
+---
+description: Docker Hub identity and image naming for Topaz
+alwaysApply: true
+---
+
+# Topaz Docker / registry
+
+- Docker Hub account and image namespace: **jt7777** (not CarShyne).
+- Published image: `jt7777/topaz:latest`
+- Build and push:
+  - `docker build -t jt7777/topaz:latest .`
+  - `docker push jt7777/topaz:latest`
+- Portainer / compose must use `image: jt7777/topaz:latest` — never `carshyne/topaz` or `CarShyne/...` as a registry host.
+
+GitHub repo may be `CarShyne/Topaz`; that is separate from the Docker registry identity.

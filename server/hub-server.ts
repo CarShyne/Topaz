@@ -20,8 +20,13 @@ export function isHubEnabled(): boolean {
   return hubEnabled
 }
 
+function bonjourAllowed(): boolean {
+  if (process.env.TOPAZ_NO_BONJOUR === 'true') return false
+  return process.env.TOPAZ_BONJOUR === 'true'
+}
+
 function setHubPublishing(enabled: boolean) {
-  if (process.env.TOPAZ_NO_BONJOUR === 'true') return
+  if (!bonjourAllowed()) return
 
   if (enabled) {
     try {
@@ -77,7 +82,7 @@ export function startHubServer(): Promise<void> {
   const app = createHubApp()
   return new Promise((resolve, reject) => {
     httpServer = app.listen(PORT, '0.0.0.0', () => {
-      if (hubEnabled) setHubPublishing(true)
+      if (hubEnabled && bonjourAllowed()) setHubPublishing(true)
       console.log(`Topaz hub listening on 0.0.0.0:${PORT} (hub publishing ${hubEnabled ? 'on' : 'off'})`)
       resolve()
     })
