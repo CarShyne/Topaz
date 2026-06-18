@@ -1,4 +1,4 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { isCapacitor } from '../lib/device'
 import styles from './StatusBar.module.css'
 
@@ -7,11 +7,11 @@ function countWords(text: string) {
 }
 
 export function StatusBar() {
-  const tabs = useVaultStore(s => s.tabs)
-  const activeTabId = useVaultStore(s => s.activeTabId)
-  const noteContent = useVaultStore(s => s.noteContent)
-  const editorMode = useVaultStore(s => s.editorMode)
-  const editorStats = useVaultStore(s => s.editorStats)
+  const tabs = useGemStore(s => s.tabs)
+  const activeTabId = useGemStore(s => s.activeTabId)
+  const noteContent = useGemStore(s => s.noteContent)
+  const editorMode = useGemStore(s => s.editorMode)
+  const editorStats = useGemStore(s => s.editorStats)
   const path = tabs.find(t => t.id === activeTabId)?.path
   const fallbackContent = path ? noteContent[path] ?? '' : ''
   const words = editorStats?.words ?? countWords(fallbackContent)

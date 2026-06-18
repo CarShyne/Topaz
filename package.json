@@ -21,7 +21,7 @@
     "publish:amd64": "bash scripts/publish-jt7777-amd64.sh",
     "publish:arm64": "bash scripts/publish-jt7777-arm64.sh",
     "build:mobile": "vite build --config vite.mobile.config.ts && cp dist-mobile/index.mobile.html dist-mobile/index.html",
-    "cap:sync": "npm run build:mobile && npx cap sync ios",
+    "cap:sync": "npm run icons && npm run build:mobile && npx cap sync ios",
     "cap:open": "npx cap open ios",
     "ipa": "bash scripts/build-ipa.sh",
     "ipa:signed": "bash scripts/build-ipa-signed.sh",

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { renameNote, renameFolder } from '../lib/notes'
 import styles from './RenameItemModal.module.css'
 
 export function RenameItemModal() {
-  const target = useVaultStore(s => s.renameTarget)
-  const setTarget = useVaultStore(s => s.setRenameTarget)
+  const target = useGemStore(s => s.renameTarget)
+  const setTarget = useGemStore(s => s.setRenameTarget)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)

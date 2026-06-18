@@ -30,6 +30,44 @@ Topaz’s visual identity — its dark theme, color palette, typography, and ove
 
 ## Docker / Portainer (self-hosted web app)
 
-Docker image: **`jt7777/topaz:latest`** (https://hub.docker.com/r/jt7777/topaz).
+Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r/jt7777/topaz).
 
+Notes are stored in **gems** under `/data/gems` inside the container (`TOPAZ_GEMS_DIR`). Upgrades from older images that used `/data/vaults` are handled automatically on startup (symlink or copy).
 
+### Portainer (for you and other users)
+
+1. **Stacks** → **Add stack** (or edit existing)
+2. Build method: **Repository**
+3. Repository URL: `https://github.com/CarShyne/Topaz`
+4. Reference: `refs/heads/main`
+5. Compose path: **`docker-compose.portainer.yml`**
+6. Deploy
+
+Ignore `ghcr.io/carshyne/...` — use **jt7777** only (GitHub registry often gives permission denied).
+
+### After you change code (maintainers)
+
+On your Mac, publish the new image to Docker Hub once:
+
+```bash
+cd ~/Projects/Topaz
+git pull
+./scripts/publish-jt7777.sh
+```
+
+Then **Portainer → Pull and redeploy**. Everyone pulling `jt7777/topaz:latest` gets the update.
+
+On a Raspberry Pi you can also run `./scripts/pi-force-update.sh [tag]` over SSH.
+
+### “Permission denied” / old UI / gem won’t create
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| Still says “Your connected knowledge base” | Old `jt7777/topaz` image on Docker Hub | Run `./scripts/publish-jt7777.sh`, then redeploy Portainer |
+| `pull access denied` for `ghcr.io/carshyne/...` | Don’t use GitHub registry | Use `docker-compose.portainer.yml` (jt7777 only) |
+| Create gem does nothing | Same — old image without gem API | Publish + redeploy |
+| Health check fails after upgrade | Stale container or old API path | Redeploy, then open `http://YOUR-SERVER:3921/api/gem/whatami` |
+
+### Optional: auto-publish on git push
+
+Add GitHub repo secrets `DOCKERHUB_USERNAME` (`jt7777`) and `DOCKERHUB_TOKEN`, then commit `.github/workflows/docker-publish.yml` (needs a token with **workflow** scope to push workflow files).

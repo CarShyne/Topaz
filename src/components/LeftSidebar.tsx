@@ -1,10 +1,10 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { FileExplorer } from './FileExplorer'
 import { SearchPanel } from './SearchPanel'
 import styles from './LeftSidebar.module.css'
 
 export function LeftSidebar() {
-  const panel = useVaultStore(s => s.leftPanel)
+  const panel = useGemStore(s => s.leftPanel)
 
   const titles = { files: 'Files', search: 'Search', bookmarks: 'Bookmarks' }
 

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown, FileText, Folder, FolderPlus, FilePlus, Pencil, Trash2 } from 'lucide-react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { deleteNote, deleteFolder } from '../lib/notes'
 import { openExplorerMenu } from './ExplorerContextMenu'
 import styles from './FileExplorer.module.css'
 
 function ItemActions({ path, isDir, label }: { path: string; isDir: boolean; label: string }) {
-  const setRenameTarget = useVaultStore(s => s.setRenameTarget)
+  const setRenameTarget = useGemStore(s => s.setRenameTarget)
 
   const onDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -36,14 +36,14 @@ function ItemActions({ path, isDir, label }: { path: string; isDir: boolean; lab
 }
 
 export function FileExplorer() {
-  const entries = useVaultStore(s => s.entries)
-  const openTab = useVaultStore(s => s.openTab)
-  const activeTabId = useVaultStore(s => s.activeTabId)
-  const tabs = useVaultStore(s => s.tabs)
-  const selectedFolder = useVaultStore(s => s.selectedFolder)
-  const setSelectedFolder = useVaultStore(s => s.setSelectedFolder)
-  const setCreateNoteOpen = useVaultStore(s => s.setCreateNoteOpen)
-  const setCreateFolderOpen = useVaultStore(s => s.setCreateFolderOpen)
+  const entries = useGemStore(s => s.entries)
+  const openTab = useGemStore(s => s.openTab)
+  const activeTabId = useGemStore(s => s.activeTabId)
+  const tabs = useGemStore(s => s.tabs)
+  const selectedFolder = useGemStore(s => s.selectedFolder)
+  const setSelectedFolder = useGemStore(s => s.setSelectedFolder)
+  const setCreateNoteOpen = useGemStore(s => s.setCreateNoteOpen)
+  const setCreateFolderOpen = useGemStore(s => s.setCreateFolderOpen)
   const activePath = tabs.find(t => t.id === activeTabId)?.path
 
   const folders = new Set<string>()
@@ -108,7 +108,7 @@ function FolderNode({ path, name, entries, activePath, selectedFolder, onSelect,
   onSelect: (f: string) => void; onOpen: (p: string) => void; depth: number
 }) {
   const [open, setOpen] = useState(true)
-  const setCreateNoteOpen = useVaultStore(s => s.setCreateNoteOpen)
+  const setCreateNoteOpen = useGemStore(s => s.setCreateNoteOpen)
   const childFolders = entries.filter(e => e.isDir && e.path.startsWith(path + '/') && !e.path.slice(path.length + 1).includes('/'))
   const childFiles = entries.filter(e => !e.isDir && e.path.startsWith(path + '/') && !e.path.slice(path.length + 1).includes('/'))
   const isSelected = selectedFolder === path

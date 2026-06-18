@@ -1,20 +1,33 @@
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { Preferences } from '@capacitor/preferences'
 import { Browser } from '@capacitor/browser'
-import type { TopazAPI, TopazConfig, VaultEntry } from './platform'
+import type { TopazAPI, TopazConfig, GemEntry } from './platform'
 
 const CONFIG_KEY = 'topaz_config'
-const VAULTS_ROOT = 'vaults'
-let currentVaultPath: string | null = null
+const GEMS_ROOT = 'gems'
+let currentGemPath: string | null = null
 
-function vaultDir(vaultId: string) {
-  return `${VAULTS_ROOT}/${vaultId}`
+function gemDir(gemId: string) {
+  return `${GEMS_ROOT}/${gemId}`
+}
+
+
+function migrateConfig(raw: Record<string, unknown>): TopazConfig {
+  const legacy = raw as {
+    gems?: TopazConfig['gems']
+    vaults?: TopazConfig['gems']
+    lastGemId?: string
+    lastVaultId?: string
+  }
+  const cfg = { ...raw, gems: legacy.gems ?? legacy.vaults ?? [] } as TopazConfig
+  if (!cfg.lastGemId && legacy.lastVaultId) cfg.lastGemId = legacy.lastVaultId
+  return cfg
 }
 
 async function readConfig(): Promise<TopazConfig> {
   const { value } = await Preferences.get({ key: CONFIG_KEY })
-  if (!value) return { vaults: [] }
-  return JSON.parse(value)
+  if (!value) return { gems: [] }
+  return migrateConfig(JSON.parse(value) as Record<string, unknown>)
 }
 
 async function writeConfig(cfg: TopazConfig) {
@@ -29,7 +42,7 @@ async function ensureDir(path: string) {
   }
 }
 
-async function walkDir(base: string, rel = ''): Promise<VaultEntry[]> {
+async function walkDir(base: string, rel = ''): Promise<GemEntry[]> {
   const full = rel ? `${base}/${rel}` : base
   let listing
   try {
@@ -38,7 +51,7 @@ async function walkDir(base: string, rel = ''): Promise<VaultEntry[]> {
     return []
   }
 
-  const entries: VaultEntry[] = []
+  const entries: GemEntry[] = []
   for (const file of listing.files) {
     const name = typeof file === 'string' ? file : file.name
     const isDir = typeof file === 'string' ? false : file.type === 'directory'
@@ -70,10 +83,10 @@ async function walkDir(base: string, rel = ''): Promise<VaultEntry[]> {
   return entries
 }
 
-async function readDeletedPathsForVault(vaultId: string): Promise<string[]> {
+async function readDeletedPathsForGem(gemId: string): Promise<string[]> {
   try {
     const res = await Filesystem.readFile({
-      path: `${vaultDir(vaultId)}/.topaz/deleted.json`,
+      path: `${gemDir(gemId)}/.topaz/deleted.json`,
       directory: Directory.Data,
       encoding: Encoding.UTF8
     })
@@ -83,10 +96,10 @@ async function readDeletedPathsForVault(vaultId: string): Promise<string[]> {
   }
 }
 
-async function writeDeletedPathsForVault(vaultId: string, paths: string[]) {
-  await ensureDir(`${vaultDir(vaultId)}/.topaz`)
+async function writeDeletedPathsForGem(gemId: string, paths: string[]) {
+  await ensureDir(`${gemDir(gemId)}/.topaz`)
   await Filesystem.writeFile({
-    path: `${vaultDir(vaultId)}/.topaz/deleted.json`,
+    path: `${gemDir(gemId)}/.topaz/deleted.json`,
     directory: Directory.Data,
     data: JSON.stringify([...new Set(paths)], null, 2),
     encoding: Encoding.UTF8
@@ -98,15 +111,15 @@ export function createCapacitorAPI(): TopazAPI {
     getConfig: readConfig,
     saveConfig: async (cfg) => { await writeConfig(cfg); return true },
 
-    pickVaultFolder: async () => {
+    pickGemFolder: async () => {
       const cfg = await readConfig()
-      if (cfg.vaults.length === 0) return null
-      return cfg.vaults[0].path
+      if (cfg.gems.length === 0) return null
+      return cfg.gems[0].path
     },
 
-    createVault: async (name) => {
-      const id = name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase() || `vault-${Date.now()}`
-      const base = vaultDir(id)
+    createGem: async (name) => {
+      const id = name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase() || `gem-${Date.now()}`
+      const base = gemDir(id)
       await ensureDir(base)
       await ensureDir(`${base}/.topaz`)
       await ensureDir(`${base}/General`)
@@ -124,17 +137,17 @@ export function createCapacitorAPI(): TopazAPI {
       return id
     },
 
-    openVault: async (vaultId) => {
-      currentVaultPath = vaultId
-      await ensureDir(vaultDir(vaultId))
-      return walkDir(vaultDir(vaultId))
+    openGem: async (gemId) => {
+      currentGemPath = gemId
+      await ensureDir(gemDir(gemId))
+      return walkDir(gemDir(gemId))
     },
 
     readNote: async (relPath) => {
-      if (!currentVaultPath) return null
+      if (!currentGemPath) return null
       try {
         const res = await Filesystem.readFile({
-          path: `${vaultDir(currentVaultPath)}/${relPath}`,
+          path: `${gemDir(currentGemPath)}/${relPath}`,
           directory: Directory.Data,
           encoding: Encoding.UTF8
         })
@@ -145,8 +158,8 @@ export function createCapacitorAPI(): TopazAPI {
     },
 
     writeNote: async (relPath, content) => {
-      if (!currentVaultPath) return false
-      const full = `${vaultDir(currentVaultPath)}/${relPath}`
+      if (!currentGemPath) return false
+      const full = `${gemDir(currentGemPath)}/${relPath}`
       const parts = full.split('/')
       parts.pop()
       await ensureDir(parts.join('/'))
@@ -155,16 +168,16 @@ export function createCapacitorAPI(): TopazAPI {
     },
 
     deleteNote: async (relPath) => {
-      if (!currentVaultPath) return false
+      if (!currentGemPath) return false
       try {
-        await Filesystem.deleteFile({ path: `${vaultDir(currentVaultPath)}/${relPath}`, directory: Directory.Data })
+        await Filesystem.deleteFile({ path: `${gemDir(currentGemPath)}/${relPath}`, directory: Directory.Data })
       } catch { /* ignore */ }
       return true
     },
 
     renameNote: async (oldPath, newPath) => {
-      if (!currentVaultPath) return false
-      const base = vaultDir(currentVaultPath)
+      if (!currentGemPath) return false
+      const base = gemDir(currentGemPath)
       const content = await Filesystem.readFile({ path: `${base}/${oldPath}`, directory: Directory.Data, encoding: Encoding.UTF8 })
       await Filesystem.writeFile({ path: `${base}/${newPath}`, directory: Directory.Data, data: content.data, encoding: Encoding.UTF8 })
       await Filesystem.deleteFile({ path: `${base}/${oldPath}`, directory: Directory.Data })
@@ -172,16 +185,16 @@ export function createCapacitorAPI(): TopazAPI {
     },
 
     createFolder: async (relPath) => {
-      if (!currentVaultPath) return false
-      await ensureDir(`${vaultDir(currentVaultPath)}/${relPath}`)
+      if (!currentGemPath) return false
+      await ensureDir(`${gemDir(currentGemPath)}/${relPath}`)
       return true
     },
 
     deleteFolder: async (relPath) => {
-      if (!currentVaultPath) return false
+      if (!currentGemPath) return false
       try {
         await Filesystem.rmdir({
-          path: `${vaultDir(currentVaultPath)}/${relPath}`,
+          path: `${gemDir(currentGemPath)}/${relPath}`,
           directory: Directory.Data,
           recursive: true
         })
@@ -190,8 +203,8 @@ export function createCapacitorAPI(): TopazAPI {
     },
 
     renameFolder: async (oldPath, newPath) => {
-      if (!currentVaultPath) return false
-      const base = vaultDir(currentVaultPath)
+      if (!currentGemPath) return false
+      const base = gemDir(currentGemPath)
       const all = await walkDir(base)
       const affected = all.filter(e => e.path === oldPath || e.path.startsWith(oldPath + '/'))
       const files = affected.filter(e => !e.isDir).sort((a, b) => b.path.length - a.path.length)
@@ -211,16 +224,16 @@ export function createCapacitorAPI(): TopazAPI {
       return true
     },
 
-    getVaultPath: async () => currentVaultPath,
+    getGemPath: async () => currentGemPath,
 
     getLanIps: async () => [],
 
     openExternal: async (url) => { await Browser.open({ url }) },
 
-    readVaultWorkspace: async (vaultId) => {
+    readGemWorkspace: async (gemId) => {
       try {
         const res = await Filesystem.readFile({
-          path: `${vaultDir(vaultId)}/.topaz/workspace.json`,
+          path: `${gemDir(gemId)}/.topaz/workspace.json`,
           directory: Directory.Data,
           encoding: Encoding.UTF8
         })
@@ -230,10 +243,10 @@ export function createCapacitorAPI(): TopazAPI {
       }
     },
 
-    writeVaultWorkspace: async (vaultId, data) => {
-      await ensureDir(`${vaultDir(vaultId)}/.topaz`)
+    writeGemWorkspace: async (gemId, data) => {
+      await ensureDir(`${gemDir(gemId)}/.topaz`)
       await Filesystem.writeFile({
-        path: `${vaultDir(vaultId)}/.topaz/workspace.json`,
+        path: `${gemDir(gemId)}/.topaz/workspace.json`,
         directory: Directory.Data,
         data: JSON.stringify(data, null, 2),
         encoding: Encoding.UTF8
@@ -241,10 +254,10 @@ export function createCapacitorAPI(): TopazAPI {
       return true
     },
 
-    readSyncMeta: async (vaultId) => {
+    readSyncMeta: async (gemId) => {
       try {
         const res = await Filesystem.readFile({
-          path: `${vaultDir(vaultId)}/.topaz/sync-meta.json`,
+          path: `${gemDir(gemId)}/.topaz/sync-meta.json`,
           directory: Directory.Data,
           encoding: Encoding.UTF8
         })
@@ -254,10 +267,10 @@ export function createCapacitorAPI(): TopazAPI {
       }
     },
 
-    writeSyncMeta: async (vaultId, meta) => {
-      await ensureDir(`${vaultDir(vaultId)}/.topaz`)
+    writeSyncMeta: async (gemId, meta) => {
+      await ensureDir(`${gemDir(gemId)}/.topaz`)
       await Filesystem.writeFile({
-        path: `${vaultDir(vaultId)}/.topaz/sync-meta.json`,
+        path: `${gemDir(gemId)}/.topaz/sync-meta.json`,
         directory: Directory.Data,
         data: JSON.stringify(meta, null, 2),
         encoding: Encoding.UTF8
@@ -265,11 +278,11 @@ export function createCapacitorAPI(): TopazAPI {
       return true
     },
 
-    getNoteMtime: async (vaultId, relPath) => {
+    getNoteMtime: async (gemId, relPath) => {
       const meta = await (async () => {
         try {
           const res = await Filesystem.readFile({
-            path: `${vaultDir(vaultId)}/.topaz/sync-meta.json`,
+            path: `${gemDir(gemId)}/.topaz/sync-meta.json`,
             directory: Directory.Data,
             encoding: Encoding.UTF8
           })
@@ -282,32 +295,32 @@ export function createCapacitorAPI(): TopazAPI {
     },
 
     getDeletedPaths: async () => {
-      if (!currentVaultPath) return []
-      return readDeletedPathsForVault(currentVaultPath)
+      if (!currentGemPath) return []
+      return readDeletedPathsForGem(currentGemPath)
     },
 
     markDeletedPaths: async (paths) => {
-      if (!currentVaultPath) return false
-      const existing = await readDeletedPathsForVault(currentVaultPath)
-      await writeDeletedPathsForVault(currentVaultPath, [...existing, ...paths])
+      if (!currentGemPath) return false
+      const existing = await readDeletedPathsForGem(currentGemPath)
+      await writeDeletedPathsForGem(currentGemPath, [...existing, ...paths])
       return true
     },
 
     clearDeletedPaths: async (paths) => {
-      if (!currentVaultPath) return false
+      if (!currentGemPath) return false
       const remove = new Set(paths)
-      const existing = await readDeletedPathsForVault(currentVaultPath)
-      await writeDeletedPathsForVault(currentVaultPath, existing.filter(p => !remove.has(p)))
+      const existing = await readDeletedPathsForGem(currentGemPath)
+      await writeDeletedPathsForGem(currentGemPath, existing.filter(p => !remove.has(p)))
       return true
     },
 
     unmarkDeletedPath: async (path) => {
-      if (!currentVaultPath) return false
-      const existing = await readDeletedPathsForVault(currentVaultPath)
-      await writeDeletedPathsForVault(currentVaultPath, existing.filter(p => p !== path))
+      if (!currentGemPath) return false
+      const existing = await readDeletedPathsForGem(currentGemPath)
+      await writeDeletedPathsForGem(currentGemPath, existing.filter(p => p !== path))
       return true
     },
 
-    onVaultChange: () => () => {}
+    onGemChange: () => () => {}
   }
 }

@@ -17,14 +17,33 @@ const PAIR_PATH = join(DATA_DIR, 'pairing.json')
 interface PairState { code: string; expires: number }
 
 interface User { id: string; email: string; password_hash: string; created_at: number }
-interface VaultFile { user_id: string; vault_id: string; path: string; content: string; mtime: number }
-interface Store { users: User[]; vault_files: VaultFile[] }
+interface GemFile { user_id: string; gem_id: string; path: string; content: string; mtime: number }
+interface Store { users: User[]; gem_files: GemFile[] }
+
+interface LegacyVaultFile { user_id: string; vault_id: string; path: string; content: string; mtime: number }
+interface LegacyStore { users?: User[]; gem_files?: GemFile[]; vault_files?: LegacyVaultFile[] }
 
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
 
 function loadStore(): Store {
-  if (!existsSync(DB_PATH)) return { users: [], vault_files: [] }
-  return JSON.parse(readFileSync(DB_PATH, 'utf-8'))
+  if (!existsSync(DB_PATH)) return { users: [], gem_files: [] }
+  const raw = JSON.parse(readFileSync(DB_PATH, 'utf-8')) as LegacyStore
+  if (Array.isArray(raw.gem_files)) {
+    return { users: raw.users ?? [], gem_files: raw.gem_files }
+  }
+  if (Array.isArray(raw.vault_files)) {
+    return {
+      users: raw.users ?? [],
+      gem_files: raw.vault_files.map((f) => ({
+        user_id: f.user_id,
+        gem_id: f.vault_id,
+        path: f.path,
+        content: f.content,
+        mtime: f.mtime,
+      })),
+    }
+  }
+  return { users: raw.users ?? [], gem_files: [] }
 }
 
 function saveStore(store: Store) {
@@ -116,18 +135,18 @@ export function mountSyncRoutes(app: express.Application) {
     res.json({ token, email: user.email })
   })
 
-  app.get('/api/vaults', auth, (req, res) => {
+  app.get('/api/gems', auth, (req, res) => {
     const user = (req as express.Request & { user: { userId: string } }).user
     const store = loadStore()
-    const vaultIds = [...new Set(
-      store.vault_files.filter(v => v.user_id === user.userId).map(v => v.vault_id)
-    )]
-    res.json({ vaultIds })
+    const gemIds = Array.from(new Set(
+      store.gem_files.filter(g => g.user_id === user.userId).map(g => g.gem_id)
+    ))
+    res.json({ gemIds })
   })
 
-  app.post('/api/sync/:vaultId', auth, (req, res) => {
+  app.post('/api/sync/:gemId', auth, (req, res) => {
     const user = (req as express.Request & { user: { userId: string } }).user
-    const vaultId = req.params.vaultId as string
+    const gemId = req.params.gemId as string
     const { files, deleted } = req.body as {
       files: { path: string; content: string; mtime: number }[]
       deleted?: string[]
@@ -135,27 +154,27 @@ export function mountSyncRoutes(app: express.Application) {
     const store = loadStore()
 
     for (const f of files ?? []) {
-      const idx = store.vault_files.findIndex(
-        v => v.user_id === user.userId && v.vault_id === vaultId && v.path === f.path
+      const idx = store.gem_files.findIndex(
+        g => g.user_id === user.userId && g.gem_id === gemId && g.path === f.path
       )
       if (idx >= 0) {
-        if (f.mtime >= store.vault_files[idx].mtime) {
-          store.vault_files[idx] = { user_id: user.userId, vault_id: vaultId, path: f.path, content: f.content, mtime: f.mtime }
+        if (f.mtime >= store.gem_files[idx].mtime) {
+          store.gem_files[idx] = { user_id: user.userId, gem_id: gemId, path: f.path, content: f.content, mtime: f.mtime }
         }
       } else {
-        store.vault_files.push({ user_id: user.userId, vault_id: vaultId, path: f.path, content: f.content, mtime: f.mtime })
+        store.gem_files.push({ user_id: user.userId, gem_id: gemId, path: f.path, content: f.content, mtime: f.mtime })
       }
     }
 
     if (deleted?.length) {
       const remove = new Set(deleted)
-      store.vault_files = store.vault_files.filter(
-        v => !(v.user_id === user.userId && v.vault_id === vaultId && remove.has(v.path))
+      store.gem_files = store.gem_files.filter(
+        g => !(g.user_id === user.userId && g.gem_id === gemId && remove.has(g.path))
       )
     }
 
     saveStore(store)
-    const remote = store.vault_files.filter(v => v.user_id === user.userId && v.vault_id === vaultId)
+    const remote = store.gem_files.filter(g => g.user_id === user.userId && g.gem_id === gemId)
     res.json({ files: remote.map(({ path, content, mtime }) => ({ path, content, mtime })), deleted: deleted ?? [] })
   })
 }
@@ -181,7 +200,6 @@ export function startSyncServer(): Promise<void> {
         bonjour = new Bonjour()
         bonjour.publish({ name: 'topaz-sync', type: 'topaz-sync', port: SYNC_PORT })
       } catch {
-        // Bonjour is optional — sync still works on localhost / LAN IP
       }
       resolve()
     })

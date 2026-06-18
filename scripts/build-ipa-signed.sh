@@ -10,6 +10,9 @@ elif [ -d "/Applications/Xcode-beta.app/Contents/Developer" ]; then
   export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
 fi
 
+echo "→ Generating app icons..."
+npm run icons
+
 echo "→ Building mobile web assets..."
 npm run build:mobile
 npx cap sync ios

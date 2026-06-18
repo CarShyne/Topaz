@@ -6,8 +6,8 @@ import { existsSync, readFileSync } from 'fs'
 import type { Server } from 'http'
 import { Bonjour } from 'bonjour-service'
 import { mountSyncRoutes } from './sync-server'
-import { vaultRouter } from './vault-routes'
-import { ensureDataDirs } from './vault-fs'
+import { gemRouter } from './gem-routes'
+import { ensureDataDirs } from './gem-fs'
 import { TOPAZ_BUILD } from './build-info'
 
 export { TOPAZ_BUILD }
@@ -37,7 +37,6 @@ function setHubPublishing(enabled: boolean) {
       bonjour.unpublishAll()
       bonjour.publish({ name: 'topaz-sync', type: 'topaz-sync', port: PORT })
     } catch {
-      // Bonjour is optional — sync still works on localhost / LAN IP
     }
     return
   }
@@ -53,7 +52,7 @@ export function createHubApp(): express.Application {
   const app = express()
   app.use(cors())
   app.use(express.json({ limit: '50mb' }))
-  app.use('/api/vault', vaultRouter)
+  app.use('/api/gem', gemRouter)
 
   app.get('/api/hub', (_req, res) => {
     res.json({ enabled: hubEnabled, port: PORT, build: TOPAZ_BUILD })

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { isCapacitor } from '../lib/device'
 import { newId } from '../lib/id'
 
-export interface VaultEntry {
+export interface GemEntry {
   path: string
   name: string
   isDir: boolean
@@ -19,10 +19,10 @@ export type LeftPanel = 'files' | 'search' | 'bookmarks'
 export type RightPanel = 'backlinks' | 'outline' | 'tags'
 export type EditorMode = 'source' | 'preview' | 'split'
 
-interface VaultState {
-  vaultPath: string | null
-  vaultName: string
-  entries: VaultEntry[]
+interface GemState {
+  gemPath: string | null
+  gemName: string
+  entries: GemEntry[]
   tabs: Tab[]
   activeTabId: string | null
   leftPanel: LeftPanel
@@ -47,8 +47,8 @@ interface VaultState {
   syncServer: string
   editorStats: { words: number; chars: number } | null
 
-  setVault: (path: string, name: string, entries: VaultEntry[]) => void
-  setEntries: (entries: VaultEntry[]) => void
+  setGem: (path: string, name: string, entries: GemEntry[]) => void
+  setEntries: (entries: GemEntry[]) => void
   openTab: (path: string, title?: string, view?: Tab['view']) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
@@ -65,20 +65,20 @@ interface VaultState {
   setCreateNoteOpen: (open: boolean) => void
   setCreateFolderOpen: (open: boolean) => void
   setRenameTarget: (target: { path: string; isDir: boolean } | null) => void
-  setExplorerMenu: (menu: VaultState['explorerMenu']) => void
+  setExplorerMenu: (menu: GemState['explorerMenu']) => void
   setSelectedFolder: (folder: string | null) => void
   removePathsFromState: (paths: string[]) => void
   remapPathsInState: (map: (path: string) => string | null) => void
-  setSyncStatus: (s: VaultState['syncStatus']) => void
+  setSyncStatus: (s: GemState['syncStatus']) => void
   setSyncError: (msg: string | null) => void
   setAuth: (token: string | null, email: string | null) => void
   setSyncServer: (url: string) => void
   setEditorStats: (words: number, chars: number) => void
 }
 
-export const useVaultStore = create<VaultState>((set, get) => ({
-  vaultPath: null,
-  vaultName: '',
+export const useGemStore = create<GemState>((set, get) => ({
+  gemPath: null,
+  gemName: '',
   entries: [],
   tabs: [],
   activeTabId: null,
@@ -104,9 +104,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   syncServer: 'http://127.0.0.1:3921',
   editorStats: null,
 
-  setVault: (path, name, entries) => set({
-    vaultPath: path,
-    vaultName: name,
+  setGem: (path, name, entries) => set({
+    gemPath: path,
+    gemName: name,
     entries,
     tabs: [],
     activeTabId: null,
@@ -261,5 +261,85 @@ export function buildGraphData(notes: Record<string, string>) {
       links.push({ source, target: link })
     }
   }
+  return { nodes, links }
+}
+
+export type GraphNodeKind = 'folder' | 'file'
+
+export interface FolderGraphNode {
+  id: string
+  label: string
+  kind: GraphNodeKind
+  parentFolder?: string
+}
+
+export interface FolderGraphLink {
+  source: string
+  target: string
+  kind: 'contains' | 'wiki'
+}
+
+/** Folder tree for graph view — Topaz folders, diamond notes branching off. */
+export function buildFolderGraphData(
+  entries: GemEntry[],
+  notes: Record<string, string>,
+  rootLabel: string
+): { nodes: FolderGraphNode[]; links: FolderGraphLink[] } {
+  const nodes: FolderGraphNode[] = []
+  const links: FolderGraphLink[] = []
+  const nodeIds = new Set<string>()
+  const folderIds = new Set<string>()
+
+  const ensureFolder = (folderPath: string) => {
+    const id = `folder:${folderPath}`
+    if (folderIds.has(id)) return id
+    folderIds.add(id)
+    const label = folderPath ? (folderPath.split('/').pop() ?? folderPath) : rootLabel
+    nodes.push({ id, label, kind: 'folder' })
+    nodeIds.add(id)
+    return id
+  }
+
+  ensureFolder('')
+
+  for (const e of entries.filter(e => e.isDir)) {
+    ensureFolder(e.path)
+  }
+
+  const addFile = (filePath: string) => {
+    if (!filePath.endsWith('.md')) return
+    const id = filePath.replace(/\.md$/, '')
+    if (nodeIds.has(id)) return
+    const parts = filePath.split('/')
+    const fileName = (parts.pop() ?? id).replace(/\.md$/, '')
+    const folderPath = parts.join('/')
+    const parentId = ensureFolder(folderPath)
+    nodes.push({ id, label: fileName, kind: 'file', parentFolder: parentId })
+    nodeIds.add(id)
+    links.push({ source: parentId, target: id, kind: 'contains' })
+  }
+
+  for (const e of entries.filter(e => !e.isDir)) addFile(e.path)
+  for (const path of Object.keys(notes)) addFile(path)
+
+  for (const [path, content] of Object.entries(notes)) {
+    const source = path.replace(/\.md$/, '')
+    if (!nodeIds.has(source)) continue
+    for (const link of extractWikiLinks(content)) {
+      if (!nodeIds.has(link)) {
+        const parts = link.split('/')
+        const fileName = parts.pop() ?? link
+        const folderPath = parts.join('/')
+        const parentId = ensureFolder(folderPath)
+        nodes.push({ id: link, label: fileName, kind: 'file', parentFolder: parentId })
+        nodeIds.add(link)
+        links.push({ source: parentId, target: link, kind: 'contains' })
+      }
+      if (source !== link) {
+        links.push({ source, target: link, kind: 'wiki' })
+      }
+    }
+  }
+
   return { nodes, links }
 }

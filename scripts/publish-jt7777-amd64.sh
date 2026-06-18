@@ -35,5 +35,5 @@ docker buildx build --platform linux/amd64 \
 echo ""
 echo "DONE — $IMAGE (amd64) pushed."
 echo "Portainer: use image jt7777/topaz:latest → Pull and redeploy"
-echo "Check: http://YOUR-SERVER:3921/api/vault/whatami"
+echo "Check: http://YOUR-SERVER:3921/api/gem/whatami"
 echo ""

@@ -7,8 +7,8 @@ import { startSyncServer, stopSyncServer, SYNC_PORT } from '../server/sync-serve
 
 let mainWindow: BrowserWindow | null = null
 let splashWindow: BrowserWindow | null = null
-let vaultWatcher: FSWatcher | null = null
-let currentVaultPath: string | null = null
+let gemWatcher: FSWatcher | null = null
+let currentGemPath: string | null = null
 let tray: Tray | null = null
 let quitting = false
 
@@ -16,22 +16,40 @@ const TOPAZ_DIR = join(homedir(), '.topaz')
 const CONFIG_PATH = join(TOPAZ_DIR, 'config.json')
 
 interface TopazConfig {
-  vaults: { id: string; name: string; path: string }[]
-  lastVaultId?: string
+  gems: { id: string; name: string; path: string }[]
+  lastGemId?: string
   syncServer?: string
   authToken?: string
   userEmail?: string
   hubMode?: boolean
+  syncRole?: 'server' | 'client'
+}
+
+function migrateConfig(raw: Record<string, unknown>): TopazConfig {
+  const migrated = { ...raw } as TopazConfig & { vaults?: TopazConfig['gems']; lastVaultId?: string }
+  if (migrated.vaults && !migrated.gems) {
+    migrated.gems = migrated.vaults
+    delete (migrated as Record<string, unknown>).vaults
+  }
+  if (migrated.lastVaultId !== undefined && migrated.lastGemId === undefined) {
+    migrated.lastGemId = migrated.lastVaultId
+    delete (migrated as Record<string, unknown>).lastVaultId
+  }
+  if (!migrated.gems) migrated.gems = []
+  return migrated
 }
 
 function ensureConfig(): TopazConfig {
   if (!existsSync(TOPAZ_DIR)) mkdirSync(TOPAZ_DIR, { recursive: true })
   if (!existsSync(CONFIG_PATH)) {
-    const cfg: TopazConfig = { vaults: [], hubMode: true }
+    const cfg: TopazConfig = { gems: [], hubMode: true }
     writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
     return cfg
   }
-  return JSON.parse(readFileSync(CONFIG_PATH, 'utf-8'))
+  const raw = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) as Record<string, unknown>
+  const cfg = migrateConfig(raw)
+  if ('vaults' in raw || 'lastVaultId' in raw) saveConfig(cfg)
+  return cfg
 }
 
 function saveConfig(cfg: TopazConfig) {
@@ -125,7 +143,7 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null
-    vaultWatcher?.close()
+    gemWatcher?.close()
   })
 
   mainWindow.on('close', (e) => {
@@ -243,56 +261,56 @@ ipcMain.handle('save-config', (_e, cfg: TopazConfig) => {
   return true
 })
 
-ipcMain.handle('pick-vault-folder', async () => {
+ipcMain.handle('pick-gem-folder', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     properties: ['openDirectory', 'createDirectory']
   })
   return result.canceled ? null : result.filePaths[0]
 })
 
-ipcMain.handle('create-vault', async (_e, name: string) => {
+ipcMain.handle('create-gem', async (_e, name: string) => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     properties: ['openDirectory', 'createDirectory'],
-    title: 'Choose location for new vault'
+    title: 'Choose location for new gem'
   })
   if (result.canceled) return null
-  const vaultPath = join(result.filePaths[0], name)
-  if (!existsSync(vaultPath)) mkdirSync(vaultPath, { recursive: true })
-  const topazDir = join(vaultPath, '.topaz')
+  const gemPath = join(result.filePaths[0], name)
+  if (!existsSync(gemPath)) mkdirSync(gemPath, { recursive: true })
+  const topazDir = join(gemPath, '.topaz')
   if (!existsSync(topazDir)) mkdirSync(topazDir, { recursive: true })
-  const generalDir = join(vaultPath, 'General')
+  const generalDir = join(gemPath, 'General')
   if (!existsSync(generalDir)) mkdirSync(generalDir, { recursive: true })
   const welcome = join(generalDir, 'Welcome.md')
   if (!existsSync(welcome)) {
     writeFileSync(welcome, `# Welcome to Topaz\n\nNext Level Notes.\n\n## Getting started\n\n- **Projects** are folders — create them in the file sidebar\n- **Notes** live inside projects\n- Link notes with \`[[double brackets]]\`\n- Sign in under Settings to sync — always free\n`)
   }
-  return vaultPath
+  return gemPath
 })
 
-ipcMain.handle('open-vault', async (_e, vaultPath: string) => {
-  currentVaultPath = vaultPath
-  vaultWatcher?.close()
-  vaultWatcher = chokidar.watch(vaultPath, {
+ipcMain.handle('open-gem', async (_e, gemPath: string) => {
+  currentGemPath = gemPath
+  gemWatcher?.close()
+  gemWatcher = chokidar.watch(gemPath, {
     ignored: /(^|[/\\])\../,
     persistent: true,
     ignoreInitial: true
   })
-  vaultWatcher.on('all', (event: string, filePath: string) => {
-    mainWindow?.webContents.send('vault-change', { event, filePath: filePath.slice(vaultPath.length + 1) })
+  gemWatcher.on('all', (event: string, filePath: string) => {
+    mainWindow?.webContents.send('gem-change', { event, filePath: filePath.slice(gemPath.length + 1) })
   })
-  return walkDir(vaultPath)
+  return walkDir(gemPath)
 })
 
 ipcMain.handle('read-note', (_e, relPath: string) => {
-  if (!currentVaultPath) return null
-  const full = join(currentVaultPath, relPath)
+  if (!currentGemPath) return null
+  const full = join(currentGemPath, relPath)
   if (!existsSync(full)) return null
   return readFileSync(full, 'utf-8')
 })
 
 ipcMain.handle('write-note', (_e, relPath: string, content: string) => {
-  if (!currentVaultPath) return false
-  const full = join(currentVaultPath, relPath)
+  if (!currentGemPath) return false
+  const full = join(currentGemPath, relPath)
   const dir = join(full, '..')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   writeFileSync(full, content, 'utf-8')
@@ -300,16 +318,16 @@ ipcMain.handle('write-note', (_e, relPath: string, content: string) => {
 })
 
 ipcMain.handle('delete-note', (_e, relPath: string) => {
-  if (!currentVaultPath) return false
-  const full = join(currentVaultPath, relPath)
+  if (!currentGemPath) return false
+  const full = join(currentGemPath, relPath)
   if (existsSync(full)) unlinkSync(full)
   return true
 })
 
 ipcMain.handle('rename-note', (_e, oldPath: string, newPath: string) => {
-  if (!currentVaultPath) return false
-  const oldFull = join(currentVaultPath, oldPath)
-  const newFull = join(currentVaultPath, newPath)
+  if (!currentGemPath) return false
+  const oldFull = join(currentGemPath, oldPath)
+  const newFull = join(currentGemPath, newPath)
   const dir = join(newFull, '..')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   renameSync(oldFull, newFull)
@@ -317,90 +335,90 @@ ipcMain.handle('rename-note', (_e, oldPath: string, newPath: string) => {
 })
 
 ipcMain.handle('create-folder', (_e, relPath: string) => {
-  if (!currentVaultPath) return false
-  const full = join(currentVaultPath, relPath)
+  if (!currentGemPath) return false
+  const full = join(currentGemPath, relPath)
   if (!existsSync(full)) mkdirSync(full, { recursive: true })
   return true
 })
 
 ipcMain.handle('delete-folder', (_e, relPath: string) => {
-  if (!currentVaultPath) return false
-  const full = join(currentVaultPath, relPath)
+  if (!currentGemPath) return false
+  const full = join(currentGemPath, relPath)
   if (existsSync(full)) rmSync(full, { recursive: true, force: true })
   return true
 })
 
 ipcMain.handle('rename-folder', (_e, oldPath: string, newPath: string) => {
-  if (!currentVaultPath) return false
-  const oldFull = join(currentVaultPath, oldPath)
-  const newFull = join(currentVaultPath, newPath)
+  if (!currentGemPath) return false
+  const oldFull = join(currentGemPath, oldPath)
+  const newFull = join(currentGemPath, newPath)
   const dir = join(newFull, '..')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   if (existsSync(oldFull)) renameSync(oldFull, newFull)
   return true
 })
 
-ipcMain.handle('get-vault-path', () => currentVaultPath)
+ipcMain.handle('get-gem-path', () => currentGemPath)
 
 ipcMain.handle('open-external', (_e, url: string) => shell.openExternal(url))
 
-ipcMain.handle('read-vault-workspace', (_e, vaultPath: string) => {
-  const ws = join(vaultPath, '.topaz', 'workspace.json')
+ipcMain.handle('read-gem-workspace', (_e, gemPath: string) => {
+  const ws = join(gemPath, '.topaz', 'workspace.json')
   if (!existsSync(ws)) return null
   return JSON.parse(readFileSync(ws, 'utf-8'))
 })
 
-ipcMain.handle('write-vault-workspace', (_e, vaultPath: string, data: unknown) => {
-  const dir = join(vaultPath, '.topaz')
+ipcMain.handle('write-gem-workspace', (_e, gemPath: string, data: unknown) => {
+  const dir = join(gemPath, '.topaz')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   writeFileSync(join(dir, 'workspace.json'), JSON.stringify(data, null, 2))
   return true
 })
 
-function syncMetaPath(vaultPath: string) {
-  return join(vaultPath, '.topaz', 'sync-meta.json')
+function syncMetaPath(gemPath: string) {
+  return join(gemPath, '.topaz', 'sync-meta.json')
 }
 
-function readSyncMetaFile(vaultPath: string): Record<string, number> {
-  const file = syncMetaPath(vaultPath)
+function readSyncMetaFile(gemPath: string): Record<string, number> {
+  const file = syncMetaPath(gemPath)
   if (!existsSync(file)) return {}
   try { return JSON.parse(readFileSync(file, 'utf-8')) as Record<string, number> } catch { return {} }
 }
 
-function writeSyncMetaFile(vaultPath: string, meta: Record<string, number>) {
-  const dir = join(vaultPath, '.topaz')
+function writeSyncMetaFile(gemPath: string, meta: Record<string, number>) {
+  const dir = join(gemPath, '.topaz')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-  writeFileSync(syncMetaPath(vaultPath), JSON.stringify(meta, null, 2))
+  writeFileSync(syncMetaPath(gemPath), JSON.stringify(meta, null, 2))
 }
 
-ipcMain.handle('read-sync-meta', (_e, vaultPath: string) => readSyncMetaFile(vaultPath))
+ipcMain.handle('read-sync-meta', (_e, gemPath: string) => readSyncMetaFile(gemPath))
 
-ipcMain.handle('write-sync-meta', (_e, vaultPath: string, meta: Record<string, number>) => {
-  writeSyncMetaFile(vaultPath, meta)
+ipcMain.handle('write-sync-meta', (_e, gemPath: string, meta: Record<string, number>) => {
+  writeSyncMetaFile(gemPath, meta)
   return true
 })
 
-ipcMain.handle('get-note-mtime', (_e, vaultPath: string, relPath: string) => {
-  const meta = readSyncMetaFile(vaultPath)
-  const full = join(vaultPath, relPath)
+ipcMain.handle('get-note-mtime', (_e, gemPath: string, relPath: string) => {
+  const meta = readSyncMetaFile(gemPath)
+  const full = join(gemPath, relPath)
   const fsMtime = existsSync(full) ? statSync(full).mtimeMs : 0
   return Math.max(meta[relPath] ?? 0, fsMtime)
 })
 
 function deletedPathsFile() {
-  return join(currentVaultPath!, '.topaz', 'deleted.json')
+  return join(currentGemPath!, '.topaz', 'deleted.json')
 }
 
 function readDeletedPaths(): string[] {
-  if (!currentVaultPath) return []
+  if (!currentGemPath) return []
   const f = deletedPathsFile()
   if (!existsSync(f)) return []
   try { return JSON.parse(readFileSync(f, 'utf-8')) as string[] } catch { return [] }
 }
 
 function writeDeletedPaths(paths: string[]) {
-  if (!currentVaultPath) return
-  const dir = join(currentVaultPath, '.topaz')
+  if (!currentGemPath) return
+  const dir = join(currentGemPath, '.topaz')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   writeFileSync(deletedPathsFile(), JSON.stringify([...new Set(paths)], null, 2))
 }

@@ -2,84 +2,126 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  background: radial-gradient(ellipse at center, #1a0a0d 0%, #080808 70%);
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    linear-gradient(165deg, rgba(224, 17, 95, 0.08) 0%, transparent 42%),
+    var(--bg-base);
 }
 
-.card {
-  text-align: center;
-  padding: 48px;
-  max-width: 420px;
+.panel {
   width: 100%;
+  max-width: 400px;
+  padding: 32px 28px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
 }
 
 .logo {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 0 40px var(--ruby-glow);
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 12px 32px var(--ruby-glow);
 }
 
 .title {
   font-family: var(--font-brand);
-  font-size: 36px;
+  font-size: 32px;
   font-weight: normal;
   color: var(--ruby-bright);
-  margin-bottom: 8px;
-  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
 .subtitle {
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  font-size: 15px;
 }
 
 .buildHint {
+  margin-top: 10px;
   font-size: 11px;
-  color: var(--ruby-dim);
-  margin-bottom: 24px;
-  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
 }
 
-.actions {
+.createSection {
+  padding-top: 24px;
+  border-top: 1px solid var(--separator);
+}
+
+.createForm {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.primary {
-  padding: 14px 20px;
-  background: linear-gradient(135deg, var(--ruby), var(--ruby-bright));
-  color: white;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 15px;
-  box-shadow: 0 4px 20px var(--ruby-glow);
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
 }
-.primary:hover { filter: brightness(1.08); }
-
-.secondary {
-  padding: 14px 20px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  font-size: 15px;
-  box-shadow: var(--shadow-soft);
-}
-.secondary:hover { background: var(--bg-hover); color: var(--ruby-bright); }
 
 .input {
-  padding: 12px 16px;
+  padding: 12px 14px;
   background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  text-align: center;
+  border-radius: var(--radius-sm);
+  text-align: left;
   outline: none;
+  font-size: 15px;
   box-shadow: inset 0 0 0 1px var(--separator);
 }
-.input:focus { box-shadow: inset 0 0 0 1px var(--ruby-dim); }
+
+.input:focus {
+  box-shadow: inset 0 0 0 1px var(--ruby-dim), 0 0 0 3px rgba(224, 17, 95, 0.12);
+}
+
+.primary {
+  margin-top: 4px;
+  padding: 13px 18px;
+  background: var(--ruby-bright);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondary {
+  margin-top: 10px;
+  padding: 11px 16px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+
+.secondary:hover {
+  color: var(--ruby-bright);
+  background: var(--bg-hover);
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
 
 .error {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 13px;
   color: #f87171;
   text-align: left;
@@ -88,9 +130,9 @@
 .serverWarning {
   margin-bottom: 20px;
   padding: 14px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
   text-align: left;
   font-size: 13px;
   line-height: 1.5;
@@ -115,29 +157,57 @@
   word-break: break-all;
 }
 
-.primary:disabled {
+.recent {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--separator);
+}
+
+.recentTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.recentList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+
+.recentItem:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--ruby-bright);
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
+
+.recentItem:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.recent {
-  margin-top: 32px;
-  text-align: left;
+.gemDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ruby-bright), var(--ruby));
+  box-shadow: 0 0 8px var(--ruby-glow);
 }
-.recent h3 {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.recentItem {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  text-align: left;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-.recentItem:hover { background: var(--bg-hover); color: var(--ruby-bright); }

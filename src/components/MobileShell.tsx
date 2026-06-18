@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Menu, X, Plus, PanelRightOpen, Settings, Network } from 'lucide-react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { deviceKind } from '../lib/device'
 import icon from '../assets/icon.png'
 import { FileExplorer } from './FileExplorer'
@@ -12,12 +12,12 @@ export function MobileShell() {
   const [browseOpen, setBrowseOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [kind, setKind] = useState(deviceKind())
-  const vaultName = useVaultStore(s => s.vaultName)
-  const setCreateNoteOpen = useVaultStore(s => s.setCreateNoteOpen)
-  const setSettingsOpen = useVaultStore(s => s.setSettingsOpen)
-  const openTab = useVaultStore(s => s.openTab)
-  const tabs = useVaultStore(s => s.tabs)
-  const activeTabId = useVaultStore(s => s.activeTabId)
+  const gemName = useGemStore(s => s.gemName)
+  const setCreateNoteOpen = useGemStore(s => s.setCreateNoteOpen)
+  const setSettingsOpen = useGemStore(s => s.setSettingsOpen)
+  const openTab = useGemStore(s => s.openTab)
+  const tabs = useGemStore(s => s.tabs)
+  const activeTabId = useGemStore(s => s.activeTabId)
   const activeTab = tabs.find(t => t.id === activeTabId)
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function MobileShell() {
         </button>
         <div className={styles.titleBlock}>
           <span className={styles.brand}>Topaz</span>
-          <span className={styles.vault}>{activeTab?.title ?? vaultName}</span>
+          <span className={styles.gem}>{activeTab?.title ?? gemName}</span>
         </div>
         <button className={styles.iconBtn} onClick={() => setInfoOpen(v => !v)} aria-label="Note info">
           <PanelRightOpen size={20} strokeWidth={1.75} />
@@ -70,7 +70,7 @@ export function MobileShell() {
               <img src={icon} alt="" className={styles.logo} />
               <div>
                 <span className={styles.brand}>Topaz</span>
-                {vaultName && <span className={styles.vault}>{vaultName}</span>}
+                {gemName && <span className={styles.gem}>{gemName}</span>}
               </div>
               <button className={styles.iconBtn} onClick={() => setBrowseOpen(false)} aria-label="Close">
                 <X size={22} />

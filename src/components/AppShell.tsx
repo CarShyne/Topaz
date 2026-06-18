@@ -1,4 +1,4 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import styles from './AppShell.module.css'
 import { Ribbon } from './Ribbon'
 import { LeftSidebar } from './LeftSidebar'
@@ -8,8 +8,8 @@ import { StatusBar } from './StatusBar'
 import { AppHeader } from './AppHeader'
 
 export function AppShell() {
-  const leftOpen = useVaultStore(s => s.leftSidebarOpen)
-  const rightOpen = useVaultStore(s => s.rightSidebarOpen)
+  const leftOpen = useGemStore(s => s.leftSidebarOpen)
+  const rightOpen = useGemStore(s => s.rightSidebarOpen)
 
   return (
     <div className={styles.shell}>
@@ -18,7 +18,7 @@ export function AppShell() {
         <Ribbon />
         {leftOpen && <LeftSidebar />}
         <Workspace />
-        {rightOpen && <NoteInfoPanel onClose={() => useVaultStore.getState().toggleRightSidebar()} />}
+        {rightOpen && <NoteInfoPanel onClose={() => useGemStore.getState().toggleRightSidebar()} />}
       </div>
       <StatusBar />
     </div>

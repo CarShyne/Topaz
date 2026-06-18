@@ -1,38 +1,37 @@
 import { resolveSyncServer, httpGet, parseJson } from './sync-server-url'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
+import { sha256Hex } from './hash'
 
-/** Same account + vault name → same sync bucket on every device. */
-export async function deriveSyncVaultId(email: string, vaultName: string): Promise<string> {
-  const raw = `${email.trim().toLowerCase()}::${vaultName.trim().toLowerCase()}`
-  const data = new TextEncoder().encode(raw)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash).slice(0, 16))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
+/** Same account + gem name → same sync bucket on every device. */
+export async function deriveSyncGemId(email: string, gemName: string): Promise<string> {
+  const raw = `${email.trim().toLowerCase()}::${gemName.trim().toLowerCase()}`
+  const hash = sha256Hex(raw)
+  return hash.slice(0, 32)
 }
 
-export async function getVaultSyncId(vaultPath: string): Promise<string> {
+export async function getGemSyncId(gemPath: string): Promise<string> {
   const cfg = await window.topaz.getConfig()
-  const entry = cfg.vaults.find(v => v.path === vaultPath)
-  return entry?.id ?? vaultPath.replace(/[^a-zA-Z0-9-]/g, '')
+  const entry = cfg.gems.find(v => v.path === gemPath)
+  return entry?.id ?? gemPath.replace(/[^a-zA-Z0-9-]/g, '')
 }
 
-/** Legacy: adopt remote vault id if exactly one exists on the account. */
-export async function adoptRemoteVaultId(vaultPath: string, token: string, server: string): Promise<string> {
+/** Legacy: adopt remote gem id if exactly one exists on the account. */
+export async function adoptRemoteGemId(gemPath: string, token: string, server: string): Promise<string> {
   const cfg = await window.topaz.getConfig()
-  const entry = cfg.vaults.find(v => v.path === vaultPath)
-  if (!entry) return getVaultSyncId(vaultPath)
+  const entry = cfg.gems.find(v => v.path === gemPath)
+  if (!entry) return getGemSyncId(gemPath)
 
   try {
     const base = await resolveSyncServer(server)
-    const res = await httpGet(`${base}/api/vaults`, 5000, { Authorization: `Bearer ${token}` })
+    const res = await httpGet(`${base}/api/gems`, 5000, { Authorization: `Bearer ${token}` })
     if (!res.ok) return entry.id
 
-    const { vaultIds } = parseJson<{ vaultIds: string[] }>(res.data)
-    if (vaultIds.length === 1 && vaultIds[0] !== entry.id) {
-      entry.id = vaultIds[0]
+    const body = parseJson<{ gemIds?: string[]; vaultIds?: string[] }>(res.data)
+    const gemIds = body.gemIds ?? body.vaultIds ?? []
+    if (gemIds.length === 1 && gemIds[0] !== entry.id) {
+      entry.id = gemIds[0]
       await window.topaz.saveConfig(cfg)
-      return vaultIds[0]
+      return gemIds[0]
     }
   } catch {
     // offline
@@ -41,17 +40,17 @@ export async function adoptRemoteVaultId(vaultPath: string, token: string, serve
   return entry.id
 }
 
-export async function syncIdForVault(vaultPath: string): Promise<string> {
+export async function syncIdForGem(gemPath: string): Promise<string> {
   const cfg = await window.topaz.getConfig()
-  const entry = cfg.vaults.find(v => v.path === vaultPath)
-  const { authToken, userEmail, syncServer, vaultName } = useVaultStore.getState()
-  const name = entry?.name ?? vaultName
+  const entry = cfg.gems.find(v => v.path === gemPath)
+  const { authToken, userEmail, syncServer, gemName } = useGemStore.getState()
+  const name = entry?.name ?? gemName
 
   if (userEmail && name) {
-    return deriveSyncVaultId(userEmail, name)
+    return deriveSyncGemId(userEmail, name)
   }
   if (authToken && entry) {
-    return adoptRemoteVaultId(vaultPath, authToken, syncServer)
+    return adoptRemoteGemId(gemPath, authToken, syncServer)
   }
-  return getVaultSyncId(vaultPath)
+  return getGemSyncId(gemPath)
 }

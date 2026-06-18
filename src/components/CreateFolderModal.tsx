@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { createProjectFolder } from '../lib/notes'
 import styles from './CreateFolderModal.module.css'
 
 export function CreateFolderModal() {
-  const open = useVaultStore(s => s.createFolderOpen)
-  const setOpen = useVaultStore(s => s.setCreateFolderOpen)
+  const open = useGemStore(s => s.createFolderOpen)
+  const setOpen = useGemStore(s => s.setCreateFolderOpen)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)

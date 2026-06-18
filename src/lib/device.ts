@@ -1,5 +1,6 @@
 export const isCapacitor = import.meta.env.VITE_PLATFORM === 'capacitor'
 export const isWeb = import.meta.env.VITE_PLATFORM === 'web'
+export const isElectron = !isWeb && !isCapacitor
 
 export function isTablet(): boolean {
   if (typeof window === 'undefined') return false

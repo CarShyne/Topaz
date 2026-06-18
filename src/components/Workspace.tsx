@@ -1,4 +1,4 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { NoteEditor } from './NoteEditor'
 import { GraphView } from './GraphView'
 import { X, PanelRightOpen } from 'lucide-react'
@@ -6,13 +6,13 @@ import { isCapacitor } from '../lib/device'
 import styles from './Workspace.module.css'
 
 export function Workspace() {
-  const tabs = useVaultStore(s => s.tabs)
-  const activeTabId = useVaultStore(s => s.activeTabId)
-  const closeTab = useVaultStore(s => s.closeTab)
-  const editorMode = useVaultStore(s => s.editorMode)
-  const setEditorMode = useVaultStore(s => s.setEditorMode)
-  const rightOpen = useVaultStore(s => s.rightSidebarOpen)
-  const toggleRight = useVaultStore(s => s.toggleRightSidebar)
+  const tabs = useGemStore(s => s.tabs)
+  const activeTabId = useGemStore(s => s.activeTabId)
+  const closeTab = useGemStore(s => s.closeTab)
+  const editorMode = useGemStore(s => s.editorMode)
+  const setEditorMode = useGemStore(s => s.setEditorMode)
+  const rightOpen = useGemStore(s => s.rightSidebarOpen)
+  const toggleRight = useGemStore(s => s.toggleRightSidebar)
   const activeTab = tabs.find(t => t.id === activeTabId)
 
   return (

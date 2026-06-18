@@ -50,6 +50,27 @@
 }
 .section input:focus { border-color: var(--ruby); }
 
+.roleLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 10px;
+}
+
+.roleOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin: 8px 0;
+}
+.roleOption input {
+  width: auto;
+  accent-color: var(--ruby);
+}
+
 .hubSection {
   margin: 16px 0;
   padding: 16px;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { useVaultStore, getBacklinks, getOutgoingLinks, extractHeadings, extractTags } from '../stores/vaultStore'
+import { useGemStore, getBacklinks, getOutgoingLinks, extractHeadings, extractTags } from '../stores/gemStore'
 import styles from './NoteInfoPanel.module.css'
 
 interface Props {
@@ -9,10 +9,10 @@ interface Props {
 }
 
 export function NoteInfoPanel({ compact, onClose }: Props) {
-  const tabs = useVaultStore(s => s.tabs)
-  const activeTabId = useVaultStore(s => s.activeTabId)
-  const noteContent = useVaultStore(s => s.noteContent)
-  const openTab = useVaultStore(s => s.openTab)
+  const tabs = useGemStore(s => s.tabs)
+  const activeTabId = useGemStore(s => s.activeTabId)
+  const noteContent = useGemStore(s => s.noteContent)
+  const openTab = useGemStore(s => s.openTab)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const path = activeTab?.view === 'note' ? activeTab.path : undefined
 
@@ -33,7 +33,7 @@ export function NoteInfoPanel({ compact, onClose }: Props) {
     if (!path) return
     if (!noteContent[path]) {
       window.topaz.readNote(path).then(c => {
-        if (c) useVaultStore.getState().setNoteContent(path, c)
+        if (c) useGemStore.getState().setNoteContent(path, c)
       })
     }
   }, [path, noteContent])

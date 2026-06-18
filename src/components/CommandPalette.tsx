@@ -1,21 +1,21 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import styles from './CommandPalette.module.css'
 
 const COMMANDS = [
-  { id: 'new', label: 'New note', action: () => useVaultStore.getState().setCreateNoteOpen(true) },
-  { id: 'newfolder', label: 'New project folder', action: () => useVaultStore.getState().setCreateFolderOpen(true) },
-  { id: 'graph', label: 'Open graph view', action: () => useVaultStore.getState().openTab('__graph__', 'Graph', 'graph') },
-  { id: 'files', label: 'Show file explorer', action: () => useVaultStore.getState().setLeftPanel('files') },
-  { id: 'search', label: 'Show search', action: () => useVaultStore.getState().setLeftPanel('search') },
-  { id: 'settings', label: 'Open settings', action: () => useVaultStore.getState().setSettingsOpen(true) },
-  { id: 'source', label: 'Editor: Source mode', action: () => useVaultStore.getState().setEditorMode('source') },
-  { id: 'preview', label: 'Editor: Preview mode', action: () => useVaultStore.getState().setEditorMode('preview') },
-  { id: 'split', label: 'Editor: Split mode', action: () => useVaultStore.getState().setEditorMode('split') },
+  { id: 'new', label: 'New note', action: () => useGemStore.getState().setCreateNoteOpen(true) },
+  { id: 'newfolder', label: 'New project folder', action: () => useGemStore.getState().setCreateFolderOpen(true) },
+  { id: 'graph', label: 'Open graph view', action: () => useGemStore.getState().openTab('__graph__', 'Graph', 'graph') },
+  { id: 'files', label: 'Show file explorer', action: () => useGemStore.getState().setLeftPanel('files') },
+  { id: 'search', label: 'Show search', action: () => useGemStore.getState().setLeftPanel('search') },
+  { id: 'settings', label: 'Open settings', action: () => useGemStore.getState().setSettingsOpen(true) },
+  { id: 'source', label: 'Editor: Source mode', action: () => useGemStore.getState().setEditorMode('source') },
+  { id: 'preview', label: 'Editor: Preview mode', action: () => useGemStore.getState().setEditorMode('preview') },
+  { id: 'split', label: 'Editor: Split mode', action: () => useGemStore.getState().setEditorMode('split') },
 ]
 
 export function CommandPalette() {
-  const open = useVaultStore(s => s.commandPaletteOpen)
-  const setOpen = useVaultStore(s => s.setCommandPaletteOpen)
+  const open = useGemStore(s => s.commandPaletteOpen)
+  const setOpen = useGemStore(s => s.setCommandPaletteOpen)
 
   if (!open) return null
 

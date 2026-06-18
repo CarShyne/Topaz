@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import styles from './SearchPanel.module.css'
 
 interface Result { path: string; snippet: string }
 
 export function SearchPanel() {
-  const query = useVaultStore(s => s.searchQuery)
-  const setQuery = useVaultStore(s => s.setSearchQuery)
-  const entries = useVaultStore(s => s.entries)
-  const openTab = useVaultStore(s => s.openTab)
+  const query = useGemStore(s => s.searchQuery)
+  const setQuery = useGemStore(s => s.setSearchQuery)
+  const entries = useGemStore(s => s.entries)
+  const openTab = useGemStore(s => s.openTab)
   const [results, setResults] = useState<Result[]>([])
 
   useEffect(() => {

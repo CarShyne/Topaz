@@ -5,7 +5,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { searchKeymap } from '@codemirror/search'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { renderMarkdown } from '../lib/markdown'
 import { isCapacitor } from '../lib/device'
 import { bumpSyncMtime } from '../lib/sync-meta'
@@ -16,7 +16,7 @@ import styles from './NoteEditor.module.css'
 
 function publishEditorStats(content: string) {
   const words = content.trim() ? content.trim().split(/\s+/).length : 0
-  useVaultStore.getState().setEditorStats(words, content.length)
+  useGemStore.getState().setEditorStats(words, content.length)
 }
 
 const topazTheme = EditorView.theme({
@@ -33,11 +33,11 @@ export function NoteEditor({ path }: { path: string }) {
   const pathRef = useRef(path)
   const savingRef = useRef(false)
   const loadedPathRef = useRef<string | null>(null)
-  const editorMode = useVaultStore(s => s.editorMode)
-  const noteContent = useVaultStore(s => s.noteContent)
-  const setNoteContent = useVaultStore(s => s.setNoteContent)
-  const openTab = useVaultStore(s => s.openTab)
-  const entries = useVaultStore(s => s.entries)
+  const editorMode = useGemStore(s => s.editorMode)
+  const noteContent = useGemStore(s => s.noteContent)
+  const setNoteContent = useGemStore(s => s.setNoteContent)
+  const openTab = useGemStore(s => s.openTab)
+  const entries = useGemStore(s => s.entries)
   const [loadError, setLoadError] = useState('')
   const [liveContent, setLiveContent] = useState('')
   const mobile = isCapacitor
@@ -53,8 +53,8 @@ export function NoteEditor({ path }: { path: string }) {
     if (pathRef.current !== path) return
     savingRef.current = true
     await window.topaz.writeNote(path, content)
-    const vaultPath = useVaultStore.getState().vaultPath
-    if (vaultPath) await bumpSyncMtime(vaultPath, path)
+    const gemPath = useGemStore.getState().gemPath
+    if (gemPath) await bumpSyncMtime(gemPath, path)
     savingRef.current = false
     requestSyncDebounced()
   }, [path])
@@ -63,7 +63,7 @@ export function NoteEditor({ path }: { path: string }) {
     pathRef.current = path
     setLoadError('')
     loadedPathRef.current = null
-    useVaultStore.getState().setEditorStats(0, 0)
+    useGemStore.getState().setEditorStats(0, 0)
     window.topaz.readNote(path).then(content => {
       if (pathRef.current !== path) return
       if (content === null) {

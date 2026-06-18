@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { createNamedNote, listFolders } from '../lib/notes'
 import styles from './CreateNoteModal.module.css'
 
 export function CreateNoteModal() {
-  const open = useVaultStore(s => s.createNoteOpen)
-  const setOpen = useVaultStore(s => s.setCreateNoteOpen)
-  const selectedFolder = useVaultStore(s => s.selectedFolder)
+  const open = useGemStore(s => s.createNoteOpen)
+  const setOpen = useGemStore(s => s.setCreateNoteOpen)
+  const selectedFolder = useGemStore(s => s.selectedFolder)
   const [title, setTitle] = useState('')
   const [folder, setFolder] = useState('')
   const [error, setError] = useState('')
@@ -51,7 +51,7 @@ export function CreateNoteModal() {
         />
         <label>Project folder</label>
         <select value={folder} onChange={e => setFolder(e.target.value)}>
-          <option value="">Vault root (no folder)</option>
+          <option value="">Gem root (no folder)</option>
           {folders.map(f => (
             <option key={f} value={f}>{f}</option>
           ))}

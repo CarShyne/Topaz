@@ -1,15 +1,15 @@
 import { useEffect } from 'react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { deleteNote, deleteFolder } from '../lib/notes'
 import styles from './ExplorerContextMenu.module.css'
 
 export function ExplorerContextMenu() {
-  const menu = useVaultStore(s => s.explorerMenu)
-  const setMenu = useVaultStore(s => s.setExplorerMenu)
-  const setRenameTarget = useVaultStore(s => s.setRenameTarget)
-  const setCreateNoteOpen = useVaultStore(s => s.setCreateNoteOpen)
-  const setSelectedFolder = useVaultStore(s => s.setSelectedFolder)
-  const openTab = useVaultStore(s => s.openTab)
+  const menu = useGemStore(s => s.explorerMenu)
+  const setMenu = useGemStore(s => s.setExplorerMenu)
+  const setRenameTarget = useGemStore(s => s.setRenameTarget)
+  const setCreateNoteOpen = useGemStore(s => s.setCreateNoteOpen)
+  const setSelectedFolder = useGemStore(s => s.setSelectedFolder)
+  const openTab = useGemStore(s => s.openTab)
 
   useEffect(() => {
     if (!menu) return
@@ -70,7 +70,7 @@ export function openExplorerMenu(
 ) {
   e.preventDefault()
   e.stopPropagation()
-  useVaultStore.getState().setExplorerMenu({
+  useGemStore.getState().setExplorerMenu({
     x: e.clientX,
     y: e.clientY,
     ...item

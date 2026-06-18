@@ -1,7 +1,7 @@
-import { useVaultStore } from '../stores/vaultStore'
-import { isCapacitor } from './device'
+import { useGemStore } from '../stores/gemStore'
+import { isCapacitor, isWeb } from './device'
 import { checkServerHealth, normalizeServer, resolveSyncServer, httpPost, parseJson } from './sync-server-url'
-import { syncIdForVault } from './vault-sync-id'
+import { syncIdForGem } from './gem-sync-id'
 import { getNoteSyncMtime, setSyncMtime } from './sync-meta'
 
 async function parseResponse(res: { ok: boolean; status: number; data: string }): Promise<{ error?: string; token?: string; email?: string }> {
@@ -33,8 +33,14 @@ export async function login(
   return { ...(body as { token: string; email: string }), server: base }
 }
 
-export async function register(email: string, password: string) {
-  const base = await resolveSyncServer()
+export async function register(
+  email: string,
+  password: string,
+  cachedServer?: string | null,
+  pairCode?: string | null,
+  computerIp?: string | null
+) {
+  const base = await resolveSyncServer(cachedServer, pairCode, computerIp)
   const res = await httpPost(`${base}/api/auth/register`, { email: email.trim(), password })
   if (!res.ok && res.status === 0) throw new Error('Sync is not available. Restart Topaz.')
   const body = await parseResponse(res)
@@ -44,14 +50,14 @@ export async function register(email: string, password: string) {
 
 export { checkServerHealth, resolveSyncServer }
 
-export async function syncVault(
-  vaultPath: string,
+export async function syncGem(
+  gemPath: string,
   server: string,
   token: string,
   pairCode?: string | null,
   computerIp?: string | null
 ) {
-  const store = useVaultStore.getState()
+  const store = useGemStore.getState()
   store.setSyncStatus('syncing')
 
   try {
@@ -59,52 +65,65 @@ export async function syncVault(
     const reachable = await checkServerHealth(base)
     if (!reachable) {
       store.setSyncStatus('error')
-      store.setSyncError('Computer not reachable. Open Topaz and check your code or IP.')
+      store.setSyncError(
+        isCapacitor
+          ? 'Computer not reachable. Open Topaz and check your code or IP.'
+          : isWeb
+            ? 'Sync server not reachable. Check Settings → server address or pairing code.'
+            : 'Sync server not reachable. Restart Topaz.'
+      )
       return
     }
 
     const deletedPaths = await window.topaz.getDeletedPaths?.().catch(() => []) ?? []
     const deletedSet = new Set(deletedPaths)
 
-    const entries = await window.topaz.openVault(vaultPath)
+    const entries = await window.topaz.openGem(gemPath)
     const files: { path: string; content: string; mtime: number }[] = []
 
     for (const e of entries.filter(e => !e.isDir && !deletedSet.has(e.path))) {
       const content = await window.topaz.readNote(e.path)
       if (content !== null) {
-        const mtime = await getNoteSyncMtime(vaultPath, e.path)
+        const mtime = await getNoteSyncMtime(gemPath, e.path)
         files.push({ path: e.path, content, mtime })
       }
     }
 
-    const vaultId = await syncIdForVault(vaultPath)
+    const gemId = await syncIdForGem(gemPath)
 
     const res = await httpPost(
-      `${normalizeServer(base)}/api/sync/${vaultId}`,
+      `${normalizeServer(base)}/api/sync/${gemId}`,
       { files, deleted: deletedPaths },
       60000,
       { Authorization: `Bearer ${token}` }
     )
 
-    if (!res.ok) throw new Error(`Sync failed (${res.status})`)
+    if (!res.ok) {
+      let detail = `Sync failed (${res.status})`
+      try {
+        const errBody = parseJson<{ error?: string }>(res.data)
+        if (errBody.error) detail = errBody.error
+      } catch { /* ignore */ }
+      throw new Error(detail)
+    }
 
     const remote = parseJson<{ files: { path: string; content: string; mtime: number }[] }>(res.data)
 
     for (const f of remote.files) {
       if (deletedSet.has(f.path)) continue
       const local = await window.topaz.readNote(f.path)
-      const localMtime = await getNoteSyncMtime(vaultPath, f.path)
+      const localMtime = await getNoteSyncMtime(gemPath, f.path)
       const remoteMtime = f.mtime ?? 0
       const shouldApply = local === null || (local !== f.content && remoteMtime >= localMtime)
 
       if (shouldApply) {
         await window.topaz.writeNote(f.path, f.content)
         store.setNoteContent(f.path, f.content)
-        await setSyncMtime(vaultPath, f.path, remoteMtime)
+        await setSyncMtime(gemPath, f.path, remoteMtime)
       }
     }
 
-    const updated = await window.topaz.openVault(vaultPath)
+    const updated = await window.topaz.openGem(gemPath)
     store.setEntries(updated.filter(e => e.isDir || !deletedSet.has(e.path)))
     store.setSyncStatus('synced')
     store.setSyncError(null)

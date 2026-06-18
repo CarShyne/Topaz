@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import styles from './QuickSwitcher.module.css'
 
 export function QuickSwitcher() {
-  const open = useVaultStore(s => s.quickSwitcherOpen)
-  const setOpen = useVaultStore(s => s.setQuickSwitcherOpen)
-  const entries = useVaultStore(s => s.entries)
-  const openTab = useVaultStore(s => s.openTab)
+  const open = useGemStore(s => s.quickSwitcherOpen)
+  const setOpen = useGemStore(s => s.setQuickSwitcherOpen)
+  const entries = useGemStore(s => s.entries)
+  const openTab = useGemStore(s => s.openTab)
   const [query, setQuery] = useState('')
 
   const files = entries.filter(e => !e.isDir)

@@ -1,4 +1,4 @@
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import { bumpSyncMtime } from './sync-meta'
 import { requestSyncDebounced } from './sync-trigger'
 
@@ -19,33 +19,33 @@ export function projectFolderName(name: string): string {
 }
 
 export function listFolders(): string[] {
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
   return entries.filter(e => e.isDir).map(e => e.path).sort()
 }
 
-export async function refreshVault() {
-  const { vaultPath } = useVaultStore.getState()
-  if (!vaultPath) return
-  const entries = await window.topaz.openVault(vaultPath)
-  useVaultStore.getState().setEntries(entries)
+export async function refreshGem() {
+  const { gemPath } = useGemStore.getState()
+  if (!gemPath) return
+  const entries = await window.topaz.openGem(gemPath)
+  useGemStore.getState().setEntries(entries)
 }
 
 export async function createProjectFolder(name: string): Promise<string> {
   const folder = projectFolderName(name)
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
   if (entries.some(e => e.isDir && e.path === folder)) {
     throw new Error('A project with that name already exists')
   }
   await window.topaz.createFolder(folder)
-  await refreshVault()
-  useVaultStore.getState().setSelectedFolder(folder)
+  await refreshGem()
+  useGemStore.getState().setSelectedFolder(folder)
   return folder
 }
 
 export async function createNamedNote(title: string, folder?: string | null): Promise<string> {
   const fileName = noteFileName(title)
   const relPath = folder ? `${folder}/${fileName}` : fileName
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
 
   if (entries.some(e => !e.isDir && e.path === relPath)) {
     throw new Error('A note with that name already exists in this folder')
@@ -53,11 +53,11 @@ export async function createNamedNote(title: string, folder?: string | null): Pr
 
   const heading = sanitizeName(title).replace(/\.md$/i, '')
   await window.topaz.writeNote(relPath, `# ${heading}\n\n`)
-  const { vaultPath } = useVaultStore.getState()
-  if (vaultPath) await bumpSyncMtime(vaultPath, relPath)
+  const { gemPath } = useGemStore.getState()
+  if (gemPath) await bumpSyncMtime(gemPath, relPath)
   await window.topaz.unmarkDeletedPath(relPath)
-  await refreshVault()
-  useVaultStore.getState().openTab(relPath, heading)
+  await refreshGem()
+  useGemStore.getState().openTab(relPath, heading)
   requestSyncDebounced()
   return relPath
 }
@@ -65,26 +65,26 @@ export async function createNamedNote(title: string, folder?: string | null): Pr
 export async function deleteNote(path: string) {
   await window.topaz.deleteNote(path)
   await window.topaz.markDeletedPaths([path])
-  useVaultStore.getState().removePathsFromState([path])
-  await refreshVault()
+  useGemStore.getState().removePathsFromState([path])
+  await refreshGem()
 }
 
 export async function deleteFolder(path: string) {
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
   const paths = entries
     .filter(e => !e.isDir && (e.path === path || e.path.startsWith(path + '/')))
     .map(e => e.path)
   await window.topaz.deleteFolder(path)
   if (paths.length) await window.topaz.markDeletedPaths(paths)
-  useVaultStore.getState().removePathsFromState(paths)
-  await refreshVault()
+  useGemStore.getState().removePathsFromState(paths)
+  await refreshGem()
 }
 
 export async function renameNote(path: string, newTitle: string) {
   const fileName = noteFileName(newTitle)
   const dir = path.includes('/') ? path.split('/').slice(0, -1).join('/') : ''
   const newPath = dir ? `${dir}/${fileName}` : fileName
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
 
   if (newPath === path) return newPath
   if (entries.some(e => !e.isDir && e.path === newPath)) {
@@ -92,8 +92,8 @@ export async function renameNote(path: string, newTitle: string) {
   }
 
   await window.topaz.renameNote(path, newPath)
-  useVaultStore.getState().remapPathsInState(p => (p === path ? newPath : p))
-  await refreshVault()
+  useGemStore.getState().remapPathsInState(p => (p === path ? newPath : p))
+  await refreshGem()
   return newPath
 }
 
@@ -101,7 +101,7 @@ export async function renameFolder(path: string, newName: string) {
   const folder = projectFolderName(newName)
   const parent = path.includes('/') ? path.split('/').slice(0, -1).join('/') : ''
   const newPath = parent ? `${parent}/${folder}` : folder
-  const { entries } = useVaultStore.getState()
+  const { entries } = useGemStore.getState()
 
   if (newPath === path) return newPath
   if (entries.some(e => e.isDir && e.path === newPath)) {
@@ -109,11 +109,11 @@ export async function renameFolder(path: string, newName: string) {
   }
 
   await window.topaz.renameFolder(path, newPath)
-  useVaultStore.getState().remapPathsInState(p => {
+  useGemStore.getState().remapPathsInState(p => {
     if (p === path) return newPath
     if (p.startsWith(path + '/')) return newPath + p.slice(path.length)
     return p
   })
-  await refreshVault()
+  await refreshGem()
   return newPath
 }

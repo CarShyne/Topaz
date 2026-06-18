@@ -2,25 +2,25 @@ import {
   Files, Search, Bookmark, Network, Plus, Settings,
   PanelLeftClose, PanelRightClose, Command, Zap
 } from 'lucide-react'
-import { useVaultStore } from '../stores/vaultStore'
+import { useGemStore } from '../stores/gemStore'
 import styles from './Ribbon.module.css'
 
 export function Ribbon() {
-  const setLeftPanel = useVaultStore(s => s.setLeftPanel)
-  const leftPanel = useVaultStore(s => s.leftPanel)
-  const toggleLeft = useVaultStore(s => s.toggleLeftSidebar)
-  const toggleRight = useVaultStore(s => s.toggleRightSidebar)
-  const openTab = useVaultStore(s => s.openTab)
-  const setCommandPaletteOpen = useVaultStore(s => s.setCommandPaletteOpen)
-  const setQuickSwitcherOpen = useVaultStore(s => s.setQuickSwitcherOpen)
-  const setSettingsOpen = useVaultStore(s => s.setSettingsOpen)
+  const setLeftPanel = useGemStore(s => s.setLeftPanel)
+  const leftPanel = useGemStore(s => s.leftPanel)
+  const toggleLeft = useGemStore(s => s.toggleLeftSidebar)
+  const toggleRight = useGemStore(s => s.toggleRightSidebar)
+  const openTab = useGemStore(s => s.openTab)
+  const setCommandPaletteOpen = useGemStore(s => s.setCommandPaletteOpen)
+  const setQuickSwitcherOpen = useGemStore(s => s.setQuickSwitcherOpen)
+  const setSettingsOpen = useGemStore(s => s.setSettingsOpen)
 
   const items = [
     { id: 'files' as const, icon: Files, label: 'Files', action: () => setLeftPanel('files') },
     { id: 'search' as const, icon: Search, label: 'Search', action: () => setLeftPanel('search') },
     { id: 'bookmarks' as const, icon: Bookmark, label: 'Bookmarks', action: () => setLeftPanel('bookmarks') },
     { id: 'graph', icon: Network, label: 'Graph', action: () => openTab('__graph__', 'Graph', 'graph') },
-    { id: 'new', icon: Plus, label: 'New note', action: () => useVaultStore.getState().setCreateNoteOpen(true) },
+    { id: 'new', icon: Plus, label: 'New note', action: () => useGemStore.getState().setCreateNoteOpen(true) },
     { id: 'switcher', icon: Zap, label: 'Quick switcher', action: () => setQuickSwitcherOpen(true) },
     { id: 'palette', icon: Command, label: 'Command palette', action: () => setCommandPaletteOpen(true) },
   ]

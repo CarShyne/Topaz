@@ -7,6 +7,9 @@ if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
   export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 fi
 
+echo "→ Generating app icons..."
+npm run icons
+
 echo "→ Building mobile web assets..."
 npm run build:mobile
 

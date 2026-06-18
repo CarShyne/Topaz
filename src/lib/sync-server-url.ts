@@ -113,12 +113,48 @@ function desktopSyncUrl(): string {
   return isWeb ? window.location.origin : DESKTOP_SYNC_URL
 }
 
+async function resolveClientSyncServer(
+  cachedUrl?: string | null,
+  pairCode?: string | null,
+  computerIp?: string | null
+): Promise<string> {
+  if (cachedUrl && await checkServerHealth(cachedUrl)) {
+    return normalizeServer(cachedUrl)
+  }
+  if (computerIp?.trim()) {
+    const direct = hostToSyncUrl(computerIp)
+    if (pairCode && await checkPairCode(direct, pairCode.trim())) return direct
+    if (await checkServerHealth(direct)) return direct
+  }
+  if (pairCode) {
+    const paired = await findServerByPairCode(pairCode, computerIp)
+    if (paired) return paired
+  }
+  if (cachedUrl) return normalizeServer(cachedUrl)
+  throw new Error('Enter your Topaz server address or 6-digit pairing code in Settings.')
+}
+
 export async function resolveSyncServer(
   cachedUrl?: string | null,
   pairCode?: string | null,
   computerIp?: string | null
 ): Promise<string> {
   if (!isCapacitor) {
+    let role: 'server' | 'client' = 'server'
+    try {
+      const cfg = await window.topaz.getConfig()
+      role = cfg.syncRole === 'client' ? 'client' : 'server'
+      cachedUrl = cachedUrl ?? cfg.syncServer ?? null
+      pairCode = pairCode ?? cfg.pairCode ?? null
+      computerIp = computerIp ?? cfg.computerIp ?? null
+    } catch {
+      // no platform
+    }
+
+    if (role === 'client') {
+      return resolveClientSyncServer(cachedUrl, pairCode, computerIp)
+    }
+
     if (isWeb) return window.location.origin
     return DESKTOP_SYNC_URL
   }

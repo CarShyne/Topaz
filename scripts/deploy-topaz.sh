@@ -22,7 +22,7 @@ echo "Starting..."
 docker compose up -d --force-recreate
 
 sleep 4
-if curl -fsS "http://127.0.0.1:3921/api/vault/health" | grep -q '"ok":true'; then
+if curl -fsS "http://127.0.0.1:3921/api/gem/health" | grep -q '"ok":true'; then
   echo ""
   echo "SUCCESS — open http://127.0.0.1:3921"
   echo "You should see: Next Level Notes"

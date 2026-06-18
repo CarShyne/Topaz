@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useVaultStore, getBacklinks, getOutgoingLinks, extractHeadings, extractTags } from '../stores/vaultStore'
+import { useGemStore, getBacklinks, getOutgoingLinks, extractHeadings, extractTags } from '../stores/gemStore'
 import styles from './RightSidebar.module.css'
 
 export function RightSidebar() {
-  const panel = useVaultStore(s => s.rightPanel)
-  const setPanel = useVaultStore(s => s.setRightPanel)
-  const tabs = useVaultStore(s => s.tabs)
-  const activeTabId = useVaultStore(s => s.activeTabId)
-  const noteContent = useVaultStore(s => s.noteContent)
-  const openTab = useVaultStore(s => s.openTab)
+  const panel = useGemStore(s => s.rightPanel)
+  const setPanel = useGemStore(s => s.setRightPanel)
+  const tabs = useGemStore(s => s.tabs)
+  const activeTabId = useGemStore(s => s.activeTabId)
+  const noteContent = useGemStore(s => s.noteContent)
+  const openTab = useGemStore(s => s.openTab)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const path = activeTab?.path
 
@@ -28,7 +28,7 @@ export function RightSidebar() {
     if (!path) return
     if (!noteContent[path]) {
       window.topaz.readNote(path).then(c => {
-        if (c) useVaultStore.getState().setNoteContent(path, c)
+        if (c) useGemStore.getState().setNoteContent(path, c)
       })
     }
   }, [path, noteContent])

@@ -1,12 +1,12 @@
-import type { TopazAPI, TopazConfig, VaultEntry } from './platform'
+import type { TopazAPI, TopazConfig, GemEntry } from './platform'
 
 const CONFIG_KEY = 'topaz_config'
 const WORKSPACE_PATH = '.topaz/workspace.json'
 
-let currentVaultPath: string | null = null
+let currentGemPath: string | null = null
 
-async function vaultPost<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
-  const res = await fetch(`/api/vault/${action}`, {
+async function gemPost<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
+  const res = await fetch(`/api/gem/${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -25,13 +25,26 @@ async function vaultPost<T>(action: string, body: Record<string, unknown> = {}):
   return res.json()
 }
 
+
+function migrateConfig(raw: Record<string, unknown>): TopazConfig {
+  const legacy = raw as {
+    gems?: TopazConfig['gems']
+    vaults?: TopazConfig['gems']
+    lastGemId?: string
+    lastVaultId?: string
+  }
+  const cfg = { ...raw, gems: legacy.gems ?? legacy.vaults ?? [] } as TopazConfig
+  if (!cfg.lastGemId && legacy.lastVaultId) cfg.lastGemId = legacy.lastVaultId
+  return cfg
+}
+
 function readLocalConfig(): TopazConfig {
   try {
     const raw = localStorage.getItem(CONFIG_KEY)
-    if (!raw) return { vaults: [] }
-    return JSON.parse(raw) as TopazConfig
+    if (!raw) return { gems: [] }
+    return migrateConfig(JSON.parse(raw) as Record<string, unknown>)
   } catch {
-    return { vaults: [] }
+    return { gems: [] }
   }
 }
 
@@ -45,7 +58,8 @@ function writeLocalConfig(cfg: TopazConfig) {
 
 async function readConfig(): Promise<TopazConfig> {
   try {
-    const { config } = await vaultPost<{ config: TopazConfig }>('getConfig')
+    const { config: rawConfig } = await gemPost<{ config: TopazConfig }>('getConfig')
+    const config = migrateConfig(rawConfig as unknown as Record<string, unknown>)
     writeLocalConfig(config)
     return config
   } catch {
@@ -55,7 +69,7 @@ async function readConfig(): Promise<TopazConfig> {
 
 async function writeConfig(cfg: TopazConfig) {
   writeLocalConfig(cfg)
-  await vaultPost('saveConfig', { config: cfg })
+  await gemPost('saveConfig', { config: cfg })
 }
 
 export function createWebAPI(): TopazAPI {
@@ -63,38 +77,38 @@ export function createWebAPI(): TopazAPI {
     getConfig: readConfig,
     saveConfig: async (cfg) => { await writeConfig(cfg); return true },
 
-    pickVaultFolder: async () => null,
+    pickGemFolder: async () => null,
 
-    createVault: async (name) => {
-      const { vaultPath } = await vaultPost<{ vaultPath: string }>('createVault', { name })
-      return vaultPath
+    createGem: async (name) => {
+      const { gemPath } = await gemPost<{ gemPath: string }>('createGem', { name })
+      return gemPath
     },
 
-    createAndOpenVault: async (name) => {
-      const result = await vaultPost<{ vaultPath: string; name: string; entries: VaultEntry[] }>('createAndOpen', { name })
-      currentVaultPath = result.vaultPath
+    createAndOpenGem: async (name) => {
+      const result = await gemPost<{ gemPath: string; name: string; entries: GemEntry[] }>('createAndOpen', { name })
+      currentGemPath = result.gemPath
       return result
     },
 
-    openVault: async (path) => {
-      currentVaultPath = path
-      const { entries } = await vaultPost<{ entries: VaultEntry[] }>('openVault', { vaultPath: path })
+    openGem: async (path) => {
+      currentGemPath = path
+      const { entries } = await gemPost<{ entries: GemEntry[] }>('openGem', { gemPath: path })
       return entries
     },
 
     readNote: async (relPath) => {
-      if (!currentVaultPath) return null
-      const { content } = await vaultPost<{ content: string | null }>('readNote', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return null
+      const { content } = await gemPost<{ content: string | null }>('readNote', {
+        gemPath: currentGemPath,
         path: relPath,
       })
       return content
     },
 
     writeNote: async (relPath, content) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('writeNote', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('writeNote', {
+        gemPath: currentGemPath,
         path: relPath,
         content,
       })
@@ -102,18 +116,18 @@ export function createWebAPI(): TopazAPI {
     },
 
     deleteNote: async (relPath) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('deleteNote', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('deleteNote', {
+        gemPath: currentGemPath,
         path: relPath,
       })
       return ok
     },
 
     renameNote: async (oldPath, newPath) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('renameNote', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('renameNote', {
+        gemPath: currentGemPath,
         oldPath,
         newPath,
       })
@@ -121,43 +135,43 @@ export function createWebAPI(): TopazAPI {
     },
 
     createFolder: async (relPath) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('createFolder', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('createFolder', {
+        gemPath: currentGemPath,
         path: relPath,
       })
       return ok
     },
 
     deleteFolder: async (relPath) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('deleteFolder', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('deleteFolder', {
+        gemPath: currentGemPath,
         path: relPath,
       })
       return ok
     },
 
     renameFolder: async (oldPath, newPath) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('renameFolder', {
-        vaultPath: currentVaultPath,
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('renameFolder', {
+        gemPath: currentGemPath,
         oldPath,
         newPath,
       })
       return ok
     },
 
-    getVaultPath: async () => currentVaultPath,
+    getGemPath: async () => currentGemPath,
 
     getLanIps: async () => [],
 
     openExternal: async (url) => { window.open(url, '_blank') },
 
-    readVaultWorkspace: async (vaultPath) => {
+    readGemWorkspace: async (gemPath) => {
       try {
-        const { content } = await vaultPost<{ content: string | null }>('readNote', {
-          vaultPath,
+        const { content } = await gemPost<{ content: string | null }>('readNote', {
+          gemPath,
           path: WORKSPACE_PATH,
         })
         if (!content) return null
@@ -167,54 +181,54 @@ export function createWebAPI(): TopazAPI {
       }
     },
 
-    writeVaultWorkspace: async (vaultPath, data) => {
-      const { ok } = await vaultPost<{ ok: boolean }>('writeNote', {
-        vaultPath,
+    writeGemWorkspace: async (gemPath, data) => {
+      const { ok } = await gemPost<{ ok: boolean }>('writeNote', {
+        gemPath,
         path: WORKSPACE_PATH,
         content: JSON.stringify(data, null, 2),
       })
       return ok
     },
 
-    readSyncMeta: async (vaultPath) => {
-      const { meta } = await vaultPost<{ meta: Record<string, number> }>('readSyncMeta', { vaultPath })
+    readSyncMeta: async (gemPath) => {
+      const { meta } = await gemPost<{ meta: Record<string, number> }>('readSyncMeta', { gemPath })
       return meta
     },
 
-    writeSyncMeta: async (vaultPath, meta) => {
-      const { ok } = await vaultPost<{ ok: boolean }>('writeSyncMeta', { vaultPath, meta })
+    writeSyncMeta: async (gemPath, meta) => {
+      const { ok } = await gemPost<{ ok: boolean }>('writeSyncMeta', { gemPath, meta })
       return ok
     },
 
-    getNoteMtime: async (vaultPath, relPath) => {
-      const { mtime } = await vaultPost<{ mtime: number }>('getNoteMtime', { vaultPath, path: relPath })
+    getNoteMtime: async (gemPath, relPath) => {
+      const { mtime } = await gemPost<{ mtime: number }>('getNoteMtime', { gemPath, path: relPath })
       return mtime
     },
 
     getDeletedPaths: async () => {
-      if (!currentVaultPath) return []
-      const { paths } = await vaultPost<{ paths: string[] }>('getDeletedPaths', { vaultPath: currentVaultPath })
+      if (!currentGemPath) return []
+      const { paths } = await gemPost<{ paths: string[] }>('getDeletedPaths', { gemPath: currentGemPath })
       return paths
     },
 
     markDeletedPaths: async (paths) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('markDeletedPaths', { vaultPath: currentVaultPath, paths })
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('markDeletedPaths', { gemPath: currentGemPath, paths })
       return ok
     },
 
     clearDeletedPaths: async (paths) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('clearDeletedPaths', { vaultPath: currentVaultPath, paths })
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('clearDeletedPaths', { gemPath: currentGemPath, paths })
       return ok
     },
 
     unmarkDeletedPath: async (path) => {
-      if (!currentVaultPath) return false
-      const { ok } = await vaultPost<{ ok: boolean }>('unmarkDeletedPath', { vaultPath: currentVaultPath, path })
+      if (!currentGemPath) return false
+      const { ok } = await gemPost<{ ok: boolean }>('unmarkDeletedPath', { gemPath: currentGemPath, path })
       return ok
     },
 
-    onVaultChange: () => () => {},
+    onGemChange: () => () => {},
   }
 }
