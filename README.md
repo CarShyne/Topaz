@@ -15,6 +15,9 @@ Topaz uses a local-first sync model. One device acts as the **primary server**, 
 it over a custom REST API. There’s no mandatory cloud backend — your notes stay on your network unless you 
 choose otherwise.
 
+- Graph veiw uses "Gems" and "shards" , Gems are folder structures that hold shards/files within
+  them. Clicking a gems releases its shards that are your files.
+
 Topaz is an independent project, built from the ground up with its own codebase, design, and branding. It is
 not affiliated with, endorsed by, or associated with Obsidian, Dynalist Inc., Logseq, or any other note-taking 
 application or company.
