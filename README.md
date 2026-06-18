@@ -16,7 +16,7 @@ it over a custom REST API. There’s no mandatory cloud backend — your notes s
 choose otherwise.
 
 - Graph veiw uses "Gems" and "shards" , Gems are folder structures that hold shards/files within
-  them. Clicking a gems releases its shards that are your files.
+  them. Clicking a gems releases its shards.
 
 Topaz is an independent project, built from the ground up with its own codebase, design, and branding. It is
 not affiliated with, endorsed by, or associated with Obsidian, Dynalist Inc., Logseq, or any other note-taking 
