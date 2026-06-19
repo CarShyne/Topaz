@@ -18,6 +18,10 @@ choose otherwise.
 - Graph veiw uses "Gems" and "shards" , Gems are folder structures that hold shards/files within
   them. Clicking a gems releases its shards.
 
+- Facets are app extensions, Topaz comes with one builtin facet called Ingress,ingress is an import facet
+  that allows import of other .md files,text files ect.
+  Facets have a .gem file extension for installation.  
+
 Topaz is an independent project, built from the ground up with its own codebase, design, and branding. It is
 not affiliated with, endorsed by, or associated with Obsidian, Dynalist Inc., Logseq, or any other note-taking 
 application or company.
