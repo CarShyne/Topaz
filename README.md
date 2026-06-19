@@ -39,5 +39,4 @@ Topaz’s visual identity — its dark theme, color palette, typography, and ove
 
 Docker image: **`jt7777/topaz:latest`** on [Docker Hub](https://hub.docker.com/r/jt7777/topaz).
 
-Notes are stored in **gems** under `/data/gems` inside the container (`TOPAZ_GEMS_DIR`). Upgrades from older images that used `/data/vaults` are handled automatically on startup (symlink or copy).
 
